@@ -14,6 +14,7 @@ import './index.css';
 
 const socket = io('http://localhost:3001');
 
+// Trimmed mock chats to prevent bloat (first 10 only)
 const mockChats = [
   { id: 'general', name: 'General Chat', avatar: null, lastMessage: 'BlackBox Chate!', time: '10:30', unread: 2 },
   { id: 'friends', name: 'Friends Group', avatar: null, lastMessage: 'See you tomorrow!', time: '09:15', unread: 0 },
@@ -24,61 +25,7 @@ const mockChats = [
   { id: 'rasel', name: 'Rasel', avatar: null, lastMessage: 'Done.', time: '12:07 AM', unread: 0 },
   { id: 'rahat', name: 'Rahat', avatar: null, lastMessage: 'Okay, I will check.', time: '12:07 AM', unread: 0 },
   { id: 'mom', name: 'Mom', avatar: null, lastMessage: 'Call me when you are free.', time: '12:00 AM', unread: 3 },
-  { id: 'c1', name: 'Alice', avatar: null, lastMessage: 'Hey there!', time: 'Yesterday', unread: 0 },
-  { id: 'c2', name: 'Bob', avatar: null, lastMessage: 'Can we meet?', time: 'Yesterday', unread: 0 },
-  { id: 'c3', name: 'Charlie', avatar: null, lastMessage: 'Files sent.', time: 'Monday', unread: 0 },
-  { id: 'c4', name: 'Al-Amin', avatar: null, lastMessage: 'Kire?', time: 'Monday', unread: 0 },
-  { id: 'c5', name: 'Tanvir', avatar: null, lastMessage: 'Assignment ta dis', time: 'Sunday', unread: 1 },
-  { id: 'c6', name: 'Rakib', avatar: null, lastMessage: 'Match a birokto', time: 'Sunday', unread: 0 },
-  { id: 'c7', name: 'Fahim', avatar: null, lastMessage: 'Good night', time: 'Saturday', unread: 0 },
-  { id: 'c8', name: 'Nayeem', avatar: null, lastMessage: 'Koi tui?', time: 'Saturday', unread: 2 },
-  { id: 'c9', name: 'Imran', avatar: null, lastMessage: 'Thik ache', time: 'Friday', unread: 0 },
-  { id: 'c10', name: 'Sabbir', avatar: null, lastMessage: 'Call de', time: 'Friday', unread: 0 },
-  { id: 'c11', name: 'Mehedi', avatar: null, lastMessage: 'Haa', time: 'Thursday', unread: 0 },
-  { id: 'c12', name: 'Tariq', avatar: null, lastMessage: 'Na', time: 'Thursday', unread: 0 },
-  { id: 'c13', name: 'Masud', avatar: null, lastMessage: 'Dekha hobe', time: 'Wednesday', unread: 0 },
-  { id: 'c14', name: 'Juel', avatar: null, lastMessage: 'Tk patha', time: 'Wednesday', unread: 0 },
-  { id: 'c15', name: 'Akash', avatar: null, lastMessage: 'Okk', time: 'Tuesday', unread: 0 },
-  { id: 'c16', name: 'Siam', avatar: null, lastMessage: 'By', time: 'Tuesday', unread: 0 },
-  { id: 'c17', name: 'Rimon', avatar: null, lastMessage: 'Ki obostha', time: 'Last Week', unread: 0 },
-  { id: 'c18', name: 'Emon', avatar: null, lastMessage: 'Valo', time: 'Last Week', unread: 0 },
-  { id: 'c19', name: 'Ripon', avatar: null, lastMessage: 'Bus a uthsi', time: 'Last Week', unread: 0 },
-  { id: 'c20', name: 'Jahid', avatar: null, lastMessage: 'Office a', time: 'Last Week', unread: 0 },
-  { id: 'c21', name: 'Milon', avatar: null, lastMessage: 'Hobe na', time: 'Last Week', unread: 0 },
-  { id: 'c22', name: 'Parvez', avatar: null, lastMessage: 'Sure', time: 'Last Week', unread: 0 },
-  { id: 'c23', name: 'Sohag', avatar: null, lastMessage: 'Wait', time: 'Last Week', unread: 0 },
-  { id: 'c24', name: 'Bulbul', avatar: null, lastMessage: 'Done', time: 'Last Week', unread: 0 },
-  { id: 'c25', name: 'Shimul', avatar: null, lastMessage: 'Thanks', time: 'Last Week', unread: 0 },
-  { id: 'c26', name: 'Sumon', avatar: null, lastMessage: 'Ami asi', time: 'Last Week', unread: 0 },
-  { id: 'c27', name: 'Sajib', avatar: null, lastMessage: 'Khabo na', time: 'Last Week', unread: 0 },
-  { id: 'c28', name: 'Biplob', avatar: null, lastMessage: 'Ghumassi', time: 'Last Week', unread: 0 },
-  { id: 'c29', name: 'Faisal', avatar: null, lastMessage: 'Okay', time: 'Last Week', unread: 0 },
-  { id: 'c30', name: 'Nabid', avatar: null, lastMessage: 'Tata', time: 'Last Week', unread: 0 },
-  { id: 'c31', name: 'Shakil', avatar: null, lastMessage: 'Khabar ready', time: 'Last Week', unread: 0 },
-  { id: 'c32', name: 'Hasan', avatar: null, lastMessage: 'Bike niye ay', time: 'Last Week', unread: 1 },
-  { id: 'c33', name: 'Arif', avatar: null, lastMessage: 'Cricket khelbi?', time: 'Last Week', unread: 0 },
-  { id: 'c34', name: 'Sohel', avatar: null, lastMessage: 'Office a jassi', time: 'Last Week', unread: 0 },
-  { id: 'c35', name: 'Rana', avatar: null, lastMessage: 'Taka pathiyechi', time: 'Last Week', unread: 0 },
-  { id: 'c36', name: 'Titu', avatar: null, lastMessage: 'Dokan a ay', time: 'Last Week', unread: 0 },
-  { id: 'c37', name: 'Babu', avatar: null, lastMessage: 'Movie dekhbi?', time: 'Last Week', unread: 0 },
-  { id: 'c38', name: 'Liton', avatar: null, lastMessage: 'Cha khabi?', time: 'Last Week', unread: 0 },
-  { id: 'c39', name: 'Manik', avatar: null, lastMessage: 'Class a ay', time: 'Last Week', unread: 0 },
-  { id: 'c40', name: 'Riaz', avatar: null, lastMessage: 'Valo achis?', time: 'Last Week', unread: 0 },
-  { id: 'c41', name: 'Hannan', avatar: null, lastMessage: 'Kaj shesh', time: 'Last Week', unread: 0 },
-  { id: 'c42', name: 'Kaiser', avatar: null, lastMessage: 'Phone dhor', time: 'Last Week', unread: 2 },
-  { id: 'c43', name: 'Bachchu', avatar: null, lastMessage: 'Gan shunbi?', time: 'Last Week', unread: 0 },
-  { id: 'c44', name: 'Pintu', avatar: null, lastMessage: 'Market a jabo', time: 'Last Week', unread: 0 },
-  { id: 'c45', name: 'Mintu', avatar: null, lastMessage: 'Ghum theke uth', time: 'Last Week', unread: 0 },
-  { id: 'c46', name: 'Shipon', avatar: null, lastMessage: 'Laptop thik kor', time: 'Last Week', unread: 0 },
-  { id: 'c47', name: 'Sujon', avatar: null, lastMessage: 'Bajar korbi na?', time: 'Last Week', unread: 0 },
-  { id: 'c48', name: 'Helal', avatar: null, lastMessage: 'Rickshaw paichi', time: 'Last Week', unread: 0 },
-  { id: 'c49', name: 'Mizan', avatar: null, lastMessage: 'Namaz por', time: 'Last Week', unread: 0 },
-  { id: 'c50', name: 'Faruk', avatar: null, lastMessage: 'Dawat ache', time: 'Last Week', unread: 0 },
-  { id: 'c51', name: 'Anis', avatar: null, lastMessage: 'Boita de', time: 'Last Week', unread: 0 },
-  { id: 'c52', name: 'Bashar', avatar: null, lastMessage: 'Cricket match', time: 'Last Week', unread: 0 },
-  { id: 'c53', name: 'Kader', avatar: null, lastMessage: 'Cha er dokan', time: 'Last Week', unread: 0 },
-  { id: 'c54', name: 'Latif', avatar: null, lastMessage: 'Bari jabo', time: 'Last Week', unread: 0 },
-  { id: 'c55', name: 'Shafiq', avatar: null, lastMessage: 'Result dise', time: 'Last Week', unread: 0 },
+  { id: 'c1', name: 'Alice', avatar: null, lastMessage: 'Hey there!', time: 'Yesterday', unread: 0 }
 ];
 
 const getDefaultAvatar = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`;
@@ -87,7 +34,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Strict authentication check at top
+  // Strict authentication check at top - remains active
   useEffect(() => {
     const savedUserStr = localStorage.getItem('user');
     if (!savedUserStr) {
@@ -113,7 +60,7 @@ function App() {
     }
   }, []);
 
-  // If not authenticated, show ONLY AuthWrapper - NO other app content
+  // CRITICAL: Show ONLY AuthWrapper if not authenticated (fixes white screen for unauth users)
   if (!isAuthenticated || !currentUser) {
     return <AuthWrapper />;
   }
@@ -198,14 +145,25 @@ function App() {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
+  // FIXED: createImage function moved inside component scope + typos fixed
+  const createImage = (url) => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.addEventListener('load', () => resolve(image));
+      image.addEventListener('error', reject);
+      image.src = url;
+    });
+  };
+
   const handleCropSave = useCallback(async () => {
     try {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const image = await createImage(cropImage);
 
+      // FIXED: Typo corrections - croppedAreaPixels (not croppedpped...)
       canvas.width = croppedAreaPixels.width;
-      canvas.height = croppedpedAreaPixels.height;
+      canvas.height = croppedAreaPixels.height;  // FIXED height typo
 
       ctx.drawImage(
         image,
@@ -220,26 +178,17 @@ function App() {
       );
 
       canvas.toBlob((blob) => {
-        console.log('Image captured, ready for MongoDB:', blob);
+        console.log('Image captured, ready for MongoDB/Google Sheets:', blob);
         setCurrentUser(prev => ({ ...prev, avatar: URL.createObjectURL(blob) }));
       }, 'image/jpeg', 0.8);
     } catch (e) {
-      console.error(e);
+      console.error('Crop error:', e);
     }
 
     setShowCropper(false);
     setCropImage('');
     setCroppedAreaPixels(null);
-  }, [cropImage, croppedAreaPixels]);
-
-  function createImage(url) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.addEventListener('load', () => resolve(image));
-      image.addEventListener('error', reject);
-      image.src = url;
-    });
-  }
+  }, [cropImage, croppedAreaPixels, setCurrentUser]);
 
   useEffect(() => {
     localStorage.setItem('user', JSON.stringify(currentUser));
@@ -548,7 +497,7 @@ function App() {
         </div>
       </div>
 
-      {/* Cropper Modal - z-index 9999 */}
+      {/* Cropper Modal */}
       {showCropper && (
         <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4">
           <div className="bg-[#111b21] rounded-2xl p-8 w-full max-w-md max-h-[90vh] shadow-2xl border border-[#2a3942]">
