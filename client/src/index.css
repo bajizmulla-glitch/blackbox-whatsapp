@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* WhatsApp Official Colors */
+:root {
+  --wa-bg-primary: #0B141A;
+  --wa-bg-secondary: #111B21;
+  --wa-bg-chat: #202C33;
+  --wa-bg-input: #202C33;
+  --wa-green-primary: #00A884;
+  --wa-green-light: #D1F2EB;
+  --wa-text-primary: #EDEDED;
+  --wa-text-secondary: #8696A0;
+  --wa-text-muted: #535F65;
+  --wa-border: #2A3942;
+  --wa-border-light: #405D6B;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+     /* Firefox */
+    scrollbar-width: none;
+
+    /* Safari and Chrome */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+
+  .hover-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #37404a; /* Grey color */
+    border-radius: 4px;
+  }
+
+  /* Nav Rail Styles - WhatsApp Vertical Rail */
+  .nav-rail {
+    @apply w-16 bg-[#111b21] border-r border-[#2a3942] flex flex-col p-2 pt-6 pb-6 items-center h-screen fixed left-0 top-0 z-40 md:relative md:z-auto shadow-lg;
+  }
+
+  .nav-rail-button {
+    @apply w-12 h-12 rounded-full flex items-center justify-center text-[#8696a0] hover:text-[#00a884] hover:bg-[#00a884]/10 transition-all duration-200 mb-3 relative;
+  }
+
+  .nav-rail-item {
+    @apply relative;
+  }
+
+  .nav-rail-button-active {
+    @apply text-[#00a884] bg-[#00a884]/20 ring-2 ring-[#00a884]/30;
+  }
+
+  .nav-rail-button-active::after {
+    content: '';
+    @apply absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[#00a884] rounded-full shadow-lg;
+  }
+
+  /* Mobile bottom nav */
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-[#111b21] border-t border-[#2a3942] px-4 py-2 z-50 flex justify-around md:hidden;
+  }
+
+  /* Chat sidebar - aligns with rail */
+  .chat-sidebar {
+    @apply w-80 bg-[#111b21] ml-16 md:ml-0 border-r border-[#2a3942] h-screen overflow-hidden flex flex-col relative;
+  }
+
+  .chat-list-container {
+    /* scrollbar-hide এখান থেকে সরিয়ে সাধারণ সিএসএস ব্যবহার করছি */
+    @apply flex-1 p-2;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+
+  .chat-list-container::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari and Opera */
+  }
+
+  .search-input {
+    @apply w-full bg-[#202c33] border border-[#2a3942] rounded-lg pl-12 pr-4 py-2 text-[#d1d7db] placeholder-[#8696a0] focus:outline-none focus:border-[#00a884] focus:ring-1 focus:ring-[#00a884] transition-all duration-200 text-sm mb-2 relative;
+  }
+
+  .search-icon {
+    @apply absolute left-4 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5 z-10;
+  }
+}
+
+/* Custom animations */
+@keyframes pulse-wave {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* WhatsApp style message bubbles - Updated */
+@layer components {
+  .message.sent {
+    @apply relative max-w-[75%] py-2 px-3 rounded-lg ml-auto mb-1 text-white text-sm shadow-[0_1px_0.5px_rgba(0,0,0,0.13)];
+    background-color: #005c4b !important;
+    border: none !important;
+  }
+
+  .message.received {
+    @apply relative max-w-[75%] py-2 px-3 rounded-lg mr-auto mb-1 text-white text-sm shadow-[0_1px_0.5px_rgba(0,0,0,0.13)];
+    background-color: #202c33 !important;
+    border: none !important;
+  }
+  
+  .chat-input {
+    @apply bg-[#202c33] border border-[#2a3942] rounded-3xl px-16 py-3.5 focus:outline-none focus:border-[#00a884] focus:ring-2 focus:ring-[#00a884]/20 text-white placeholder-gray-400 resize-none w-full h-14 shadow-sm;
+  }
+  
+  .wa-text-primary { color: var(--wa-text-primary); }
+  .wa-text-secondary { color: var(--wa-text-secondary); }
+  .wa-bg-primary { background-color: var(--wa-bg-primary); }
+  .wa-bg-secondary { background-color: var(--wa-bg-secondary); }
+  .wa-bg-chat { background-color: var(--wa-bg-chat); }
+}
