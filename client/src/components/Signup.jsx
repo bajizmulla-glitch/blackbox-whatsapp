@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, CheckCircle } from 'lucide-react';
 
-const Signup = () => {
+const Signup = ({ onSwitchToLogin }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -142,12 +142,13 @@ const Signup = () => {
         <div className="mt-8 text-center">
           <p className="text-[#8696a0] text-sm">
             Already have an account?{' '}
-            <a href="/login" onClick={(e) => {
-              e.preventDefault();
-              window.location.href = '#login';
-            }} className="text-[#00a884] hover:text-[#25d366] font-semibold cursor-pointer">
+            <button 
+              type="button"
+              onClick={onSwitchToLogin}
+              className="text-[#00a884] hover:text-[#25d366] font-semibold cursor-pointer bg-transparent border-none p-0 underline-offset-2 hover:underline text-sm"
+            >
               Sign In
-            </a>
+            </button>
           </p>
         </div>
       </div>

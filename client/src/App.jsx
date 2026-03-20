@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Login from './components/Login';
-import Signup from './components/Signup';
+import AuthWrapper from './components/AuthWrapper';
 import Cropper from 'react-easy-crop';
 import Chat from './components/Chat';
 import ChatList from './components/ChatList';
@@ -85,9 +84,38 @@ const mockChats = [
 const getDefaultAvatar = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`;
 
 function App() {
-  // Check if user is logged in
-  if (!localStorage.getItem('user')) {
-    return <Login />;
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Strict authentication check at top
+  useEffect(() => {
+    const savedUserStr = localStorage.getItem('user');
+    if (!savedUserStr) {
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      return;
+    }
+    
+    try {
+      const savedUser = JSON.parse(savedUserStr);
+      if (savedUser && (savedUser.email || savedUser.name)) {
+        setCurrentUser(savedUser);
+        setIsAuthenticated(true);
+      } else {
+        localStorage.removeItem('user');
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+      }
+    } catch (e) {
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+    }
+  }, []);
+
+  // If not authenticated, show ONLY AuthWrapper - NO other app content
+  if (!isAuthenticated || !currentUser) {
+    return <AuthWrapper />;
   }
 
   const [activeTab, setActiveTab] = useState('chats');
@@ -96,13 +124,11 @@ function App() {
     const savedChats = localStorage.getItem('chats');
     if (!savedChats) return mockChats;
     
-    // Merge saved chats with new mock chats (to ensure new users appear)
     const parsedSaved = JSON.parse(savedChats);
     const savedIds = new Set(parsedSaved.map(c => c.id));
     const newMockChats = mockChats.filter(c => !savedIds.has(c.id));
     return [...parsedSaved, ...newMockChats];
   });
-  const [currentUser, setCurrentUser] = useState(null);
   const [userId, setUserId] = useState(null);
   const [viewMode, setViewMode] = useState('chat');
   const [showNewGroup, setShowNewGroup] = useState(false);
@@ -122,16 +148,12 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('user');
     setCurrentUser(null);
+    setIsAuthenticated(false);
     setUserId(null);
-    window.location.reload();
   };
-
 
   const handleSelectChat = (chat) => {
     setCurrentChat(chat);
-    // যদি কোনো কল চালু থাকে:
-    // ১. অন্য চ্যাটে গেলে কল স্ক্রিন ছোট (Minimize) হয়ে যাবে।
-    // ২. কলের চ্যাটে ফিরে আসলে কল স্ক্রিন বড় (Maximize) হয়ে যাবে।
     if (activeCall) {
       setIsCallMinimized(activeCall.id !== chat.id);
     }
@@ -183,7 +205,7 @@ function App() {
       const image = await createImage(cropImage);
 
       canvas.width = croppedAreaPixels.width;
-      canvas.height = croppedAreaPixels.height;
+      canvas.height = croppedpedAreaPixels.height;
 
       ctx.drawImage(
         image,
@@ -199,7 +221,6 @@ function App() {
 
       canvas.toBlob((blob) => {
         console.log('Image captured, ready for MongoDB:', blob);
-        // Update local state immediately
         setCurrentUser(prev => ({ ...prev, avatar: URL.createObjectURL(blob) }));
       }, 'image/jpeg', 0.8);
     } catch (e) {
@@ -219,14 +240,6 @@ function App() {
       image.src = url;
     });
   }
-
-  useEffect(() => {
-    // Load user from localStorage (already checked above, but for completeness)
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('user', JSON.stringify(currentUser));
@@ -300,13 +313,13 @@ function App() {
               {/* Main Content Card */}
               <div className="relative z-10 max-w-[600px] bg-[#202c33]/40 backdrop-blur-lg p-10 rounded-[2rem] border border-[#2a3942]/50 shadow-[0_0_50px_-12px_rgba(0,168,132,0.2)] flex flex-col items-center">
                 <div className="mb-6 relative group">
-                   <div className="absolute -inset-1 bg-gradient-to-r from-[#00a884] to-[#25d366] rounded-full opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
-                   <img 
-                     src="logo.png" 
-                     alt="BlackBox Chat" 
-                     className="h-24 w-auto object-contain relative z-10 drop-shadow-2xl transform transition duration-500 group-hover:scale-110"
-                     onError={(e) => {e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<span class="text-6xl animate-bounce">💬</span>';}} 
-                   />
+                  <div className="absolute -inset-1 bg-gradient-to-r from-[#00a884] to-[#25d366] rounded-full opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
+                  <img 
+                    src="logo.png" 
+                    alt="BlackBox Chat" 
+                    className="h-24 w-auto object-contain relative z-10 drop-shadow-2xl transform transition duration-500 group-hover:scale-110"
+                    onError={(e) => {e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<span class="text-6xl animate-bounce">💬</span>';}} 
+                  />
                 </div>
 
                 <h1 className="text-4xl font-extrabold text-white mb-4 tracking-tight">
@@ -460,7 +473,6 @@ function App() {
                   if (existingChat) {
                     finalChatId = existingChat.id;
 
-                    // Save call log to the chat
                     setChats(prevChats =>{
                       const otherChats = prevChats.filter(c => c.id !== finalChatId);
                       const updatedChat = {
@@ -468,7 +480,7 @@ function App() {
                         messages: [
                           ...(existingChat.messages || []),
                           {
-                            id: `call_${now.getTime()}`, // Unique ID for the call log
+                            id: `call_${now.getTime()}`,
                             message: messageText,
                             timestamp: now.toISOString(),
                             type: 'call',
@@ -482,7 +494,6 @@ function App() {
                     });
                   }
 
-                  // কল শেষে মেসেজ বক্সে সেভ করা হবে - শুধু চ্যাট লিস্ট আপডেট হবে (যদি আগে থেকে চ্যাট থাকে)
                   if (existingChat) {
                     setChats(prevChats => {
                       const otherChats = prevChats.filter(c => c.id !== finalChatId);
@@ -502,7 +513,7 @@ function App() {
                 isVideoCall={activeCall.isVideo}
                 isMinimized={isCallMinimized}
                 onToggleMinimize={() => {
-                  if (!isCallMinimized) setDragOffset({ x: 0, y: 0 }); // Reset position on minimize
+                  if (!isCallMinimized) setDragOffset({ x: 0, y: 0 });
                   setIsCallMinimized(!isCallMinimized);
                 }}
               />

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User } from 'lucide-react';
 
-const Login = () => {
+const Login = ({ onSwitchToSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -90,13 +90,13 @@ const Login = () => {
         <div className="mt-8 text-center">
           <p className="text-[#8696a0] text-sm">
             Don't have an account?{' '}
-            <a href="/signup" onClick={(e) => {
-              e.preventDefault();
-              window.location.href = '#signup';
-              // For single-page, we'll handle in App
-            }} className="text-[#00a884] hover:text-[#25d366] font-semibold cursor-pointer">
-              Create Account
-            </a>
+            <button 
+              type="button"
+              onClick={onSwitchToSignup}
+              className="text-[#00a884] hover:text-[#25d366] font-semibold cursor-pointer bg-transparent border-none p-0 underline-offset-2 hover:underline text-sm"
+            >
+              Sign Up
+            </button>
           </p>
         </div>
       </div>
