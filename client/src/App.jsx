@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Login from './components/Login';
+import Signup from './components/Signup';
 import Cropper from 'react-easy-crop';
 import Chat from './components/Chat';
 import ChatList from './components/ChatList';
@@ -83,6 +85,11 @@ const mockChats = [
 const getDefaultAvatar = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`;
 
 function App() {
+  // Check if user is logged in
+  if (!localStorage.getItem('user')) {
+    return <Login />;
+  }
+
   const [activeTab, setActiveTab] = useState('chats');
   const [currentChat, setCurrentChat] = useState(null);
   const [chats, setChats] = useState(() => {
