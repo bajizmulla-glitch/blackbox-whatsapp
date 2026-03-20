@@ -102,7 +102,7 @@ function App() {
     const newMockChats = mockChats.filter(c => !savedIds.has(c.id));
     return [...parsedSaved, ...newMockChats];
   });
-  const [currentUser, setCurrentUser] = useState({ name: 'Your Name', avatar: null });
+  const [currentUser, setCurrentUser] = useState(null);
   const [userId, setUserId] = useState(null);
   const [viewMode, setViewMode] = useState('chat');
   const [showNewGroup, setShowNewGroup] = useState(false);
@@ -121,7 +121,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
-    setCurrentUser({ name: 'Your Name', avatar: null });
+    setCurrentUser(null);
     setUserId(null);
     window.location.reload();
   };
@@ -221,7 +221,7 @@ function App() {
   }
 
   useEffect(() => {
-    // Load user from localStorage on app start
+    // Load user from localStorage (already checked above, but for completeness)
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       setCurrentUser(JSON.parse(savedUser));
