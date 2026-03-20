@@ -8,35 +8,58 @@ const Signup = ({ onSwitchToLogin }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     // Validation
     if (!name || !email || !password || !confirmPassword) {
       setError('Please fill all fields');
+      setLoading(false);
       return;
     }
     if (!email.includes('@')) {
       setError('Please enter a valid email');
+      setLoading(false);
       return;
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      setLoading(false);
       return;
     }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      setLoading(false);
       return;
     }
 
-    // Store user
-    localStorage.setItem('user', JSON.stringify({ name, email }));
-    setSuccess(true);
-    setTimeout(() => {
-      window.location.reload();
-    }, 1500);
+    try {
+      const response = await fetch('http://localhost:3001/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || 'Signup failed');
+      } else {
+        localStorage.setItem('user', JSON.stringify({ name, email }));
+        setSuccess(true);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
+    } catch (err) {
+      setError('Server error. Is server running on port 3001?');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (success) {
@@ -48,7 +71,7 @@ const Signup = ({ onSwitchToLogin }) => {
               <CheckCircle className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-3xl font-black text-white mb-4">Account Created!</h1>
-            <p className="text-[#8696a0] text-lg">Redirecting to BlackBox Chat...</p>
+            <p className="text-[#8696a0] text-lg">Data saved to Google Sheets. Redirecting...</p>
           </div>
         </div>
       </div>
@@ -131,11 +154,19 @@ const Signup = ({ onSwitchToLogin }) => {
             />
           </div>
 
-          <button
+<button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#00a884] to-[#25d366] hover:from-[#008c6d] hover:to-[#1ebb7f] text-white font-semibold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-lg backdrop-blur-sm"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-[#00a884] to-[#25d366] hover:from-[#008c6d] hover:to-[#1ebb7f] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none text-white font-semibold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-lg backdrop-blur-sm flex items-center justify-center gap-2"
           >
-            Create Account
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Creating...
+              </>
+            ) : (
+              'Create Account'
+            )}
           </button>
         </form>
 

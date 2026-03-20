@@ -6,25 +6,50 @@ const Login = ({ onSwitchToSignup }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
     if (!email || !password) {
       setError('Please fill all fields');
+      setLoading(false);
       return;
     }
     // Simple validation
     if (!email.includes('@')) {
       setError('Please enter a valid email');
+      setLoading(false);
       return;
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      setLoading(false);
       return;
     }
 
-    // Store user in localStorage and reload to show app
-    localStorage.setItem('user', JSON.stringify({ email, name: email.split('@')[0] }));
-    window.location.reload();
+    try {
+      const response = await fetch('http://localhost:3001/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || 'Login failed');
+      } else {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        window.location.reload();
+      }
+    } catch (err) {
+      setError('Server error. Is server running on port 3001?');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -79,11 +104,19 @@ const Login = ({ onSwitchToSignup }) => {
             />
           </div>
 
-          <button
+<button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#00a884] to-[#25d366] hover:from-[#008c6d] hover:to-[#1ebb7f] text-white font-semibold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-lg backdrop-blur-sm"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-[#00a884] to-[#25d366] hover:from-[#008c6d] hover:to-[#1ebb7f] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none text-white font-semibold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-lg backdrop-blur-sm flex items-center justify-center gap-2"
           >
-            Sign In
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
