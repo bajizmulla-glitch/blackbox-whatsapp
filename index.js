@@ -4,57 +4,27 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(cors());
 
-const MONGO_URI = process.env.MONGO_URI; 
+// ডাটাবেজ কানেকশন (Vercel-এ দেওয়া MONGO_URI ব্যবহার করবে)
+const mongoURI = process.env.MONGO_URI; 
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log("MongoDB Connected!"))
-  .catch(err => console.error("DB Connection Error:", err));
+mongoose.connect(mongoURI)
+  .then(() => console.log('✅ MongoDB Connected successfully!'))
+  .catch(err => console.log('❌ MongoDB Connection Error:', err));
 
-// ইউজার মডেল
-const User = mongoose.model('User', new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
-}));
-
-// সাইনআপ API রুট
-app.post('/api/signup', async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-    const checkUser = await User.findOne({ email });
-    if (checkUser) return res.status(400).json({ message: "ইমেইলটি আগে থেকেই আছে।" });
-
-    const newUser = new User({ name, email, password });
-    await newUser.save();
-    res.status(201).json({ message: "Success", success: true });
-  } catch (err) {
-    res.status(500).json({ message: "Server Error" });
-  }
+// বেসিক টেস্ট রাউট (এটি চেক করার জন্য যে সার্ভার কাজ করছে কি না)
+app.get('/', (req, res) => {
+  res.send('Blackbox Server is running and Database is connecting...');
 });
 
-// লগইন API রুট (এটি আপনার আগের কোডে ছিল না, তাই যোগ করে দিলাম)
-app.post('/api/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    
-    if (!user || user.password !== password) {
-      return res.status(401).json({ success: false, message: "ইমেইল বা পাসওয়ার্ড ভুল!" });
-    }
+// আপনার রেজিস্ট্রেশন বা অন্যান্য রাউটগুলো এর নিচে থাকবে...
 
-    res.status(200).json({ 
-      success: true, 
-      user: { name: user.name, email: user.email } 
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Server Error" });
-  }
+// আপনার কাঙ্ক্ষিত পোর্ট ৩০০১
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`🚀 Server is flying on port ${PORT}`);
 });
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server live on port ${PORT}`));
-
-module.exports = app;
