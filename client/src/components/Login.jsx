@@ -6,8 +6,8 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // ভেরসেলের জন্য ডাইনামিক API রুট
-  const API_URL = '/api';
+  // আপনার ভেরসেল ব্যাকএন্ড লিঙ্ক
+  const API_URL = 'https://blackbox-chat.vercel.app';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,14 +26,11 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
       if (response.ok) {
         // সফল হলে ইউজারের তথ্য লোকাল স্টোরেজে সেভ হবে
         localStorage.setItem('user', JSON.stringify(data.user));
-        if (data.token) localStorage.setItem('token', data.token);
-        
         onLoginSuccess(data.user);
       } else {
-        setError(data.message || 'ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।');
+        setError(data.error || 'ইমেইল বা পাসওয়ার্ড ভুল।');
       }
     } catch (err) {
-      console.error("Login Error:", err);
       setError('সার্ভারের সাথে কানেক্ট করা যাচ্ছে না।');
     } finally {
       setLoading(false);
@@ -100,11 +97,7 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
         <div className="mt-6 text-center">
           <p className="text-[#8696a0] text-sm">
             অ্যাকাউন্ট নেই?{' '}
-            <button
-              type="button"
-              onClick={onSwitchToSignup}
-              className="text-[#00a884] font-semibold hover:underline"
-            >
+            <button type="button" onClick={onSwitchToSignup} className="text-[#00a884] font-semibold hover:underline">
               Sign up
             </button>
           </p>

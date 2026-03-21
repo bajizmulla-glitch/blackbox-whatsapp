@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 
 const Signup = ({ onSwitchToLogin }) => {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '' }); // 'name' বদলে 'username' করা হয়েছে ব্যাকএন্ডের সাথে মিলাতে
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPass, setShowPass] = useState(false);
+
+  // আপনার ভেরসেল ব্যাকএন্ড লিঙ্ক
+  const API_URL = 'https://blackbox-chat.vercel.app';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,8 +18,7 @@ const Signup = ({ onSwitchToLogin }) => {
     setError('');
 
     try {
-      // লোকাল হোস্ট বাদ দিয়ে এখন রিলেটিভ পাথ ব্যবহার করছি
-      const res = await fetch('/api/signup', { 
+      const res = await fetch(`${API_URL}/register`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -25,13 +27,13 @@ const Signup = ({ onSwitchToLogin }) => {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Success! Data saved to MongoDB.");
+        alert("Success! Account Created.");
         onSwitchToLogin();
       } else {
-        setError(data.message || 'রেজিস্ট্রেশন ব্যর্থ হয়েছে।');
+        setError(data.error || 'রেজিস্ট্রেশন ব্যর্থ হয়েছে।');
       }
     } catch (err) {
-      setError('সার্ভারের সাথে কানেক্ট করা যাচ্ছে না। আপনার ইন্টারনেট বা Vercel সেটিংস চেক করুন।');
+      setError('সার্ভারের সাথে কানেক্ট করা যাচ্ছে না।');
     } finally {
       setLoading(false);
     }
@@ -51,15 +53,18 @@ const Signup = ({ onSwitchToLogin }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5" />
-            <input type="text" placeholder="Full Name" required className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-11 py-3 focus:border-[#00a884] outline-none" onChange={(e) => setFormData({...formData, name: e.target.value})} />
+            <input type="text" placeholder="Username" required className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-11 py-3 focus:border-[#00a884] outline-none" 
+            onChange={(e) => setFormData({...formData, username: e.target.value})} />
           </div>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5" />
-            <input type="email" placeholder="Email" required className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-11 py-3 focus:border-[#00a884] outline-none" onChange={(e) => setFormData({...formData, email: e.target.value})} />
+            <input type="email" placeholder="Email" required className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-11 py-3 focus:border-[#00a884] outline-none" 
+            onChange={(e) => setFormData({...formData, email: e.target.value})} />
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5" />
-            <input type={showPass ? "text" : "password"} placeholder="Password" required className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-11 pr-11 py-3 focus:border-[#00a884] outline-none" onChange={(e) => setFormData({...formData, password: e.target.value})} />
+            <input type={showPass ? "text" : "password"} placeholder="Password" required className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-11 pr-11 py-3 focus:border-[#00a884] outline-none" 
+            onChange={(e) => setFormData({...formData, password: e.target.value})} />
             <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8696a0]">
               {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -68,6 +73,12 @@ const Signup = ({ onSwitchToLogin }) => {
             {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Register in BlackBox'}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <button onClick={onSwitchToLogin} className="text-[#00a884] text-sm font-semibold hover:underline">
+            Already have an account? Log in
+          </button>
+        </div>
       </div>
     </div>
   );
