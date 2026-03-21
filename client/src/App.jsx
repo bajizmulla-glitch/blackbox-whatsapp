@@ -60,7 +60,7 @@ function App() {
             💬
           </div>
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-            BlackBox WhatsApp
+            BlackBox Chat
           </h1>
           <p className="text-xl text-[#8696a0]">Select a chat to start messaging</p>
         </div>

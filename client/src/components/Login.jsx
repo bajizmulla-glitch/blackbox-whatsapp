@@ -50,7 +50,7 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
                 type="email"
                 placeholder="test@test.com"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: Asc.value})}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
                 className="w-full bg-slate-700 border border-slate-600 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 required
               />
