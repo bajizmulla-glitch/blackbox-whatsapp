@@ -154,7 +154,7 @@ const Signup = ({ onSwitchToLogin }) => {
             />
           </div>
 
-<button
+          <button
             type="submit"
             disabled={loading}
             className="w-full bg-gradient-to-r from-[#00a884] to-[#25d366] hover:from-[#008c6d] hover:to-[#1ebb7f] disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none text-white font-semibold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-lg backdrop-blur-sm flex items-center justify-center gap-2"
@@ -188,4 +188,3 @@ const Signup = ({ onSwitchToLogin }) => {
 };
 
 export default Signup;
-

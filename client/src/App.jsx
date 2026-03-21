@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AuthWrapper from './components/AuthWrapper';
 import Cropper from 'react-easy-crop';
 import Chat from './components/Chat';
@@ -33,6 +33,7 @@ const getDefaultAvatar = (name) => `https://ui-avatars.com/api/?name=${encodeURI
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   // Strict authentication check at top - remains active
   useEffect(() => {
@@ -40,12 +41,13 @@ function App() {
     if (!savedUserStr) {
       setIsAuthenticated(false);
       setCurrentUser(null);
+      setIsLoadingAuth(false);
       return;
     }
     
     try {
       const savedUser = JSON.parse(savedUserStr);
-      if (savedUser && (savedUser.email || savedUser.name)) {
+      if (savedUser && (savedUser.email || savedUser?.name)) {
         setCurrentUser(savedUser);
         setIsAuthenticated(true);
       } else {
@@ -57,11 +59,13 @@ function App() {
       localStorage.removeItem('user');
       setIsAuthenticated(false);
       setCurrentUser(null);
+    } finally {
+      setIsLoadingAuth(false);
     }
   }, []);
 
   // CRITICAL: Show ONLY AuthWrapper if not authenticated (fixes white screen for unauth users)
-  if (!isAuthenticated || !currentUser) {
+  if (isLoadingAuth || !isAuthenticated || !currentUser) {
     return <AuthWrapper />;
   }
 
@@ -82,8 +86,8 @@ function App() {
   const [activeCall, setActiveCall] = useState(null);
   const [isCallMinimized, setIsCallMinimized] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const isDraggingRef = React.useRef(false);
-  const dragStartRef = React.useRef({ x: 0, y: 0 });
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
 
   // Cropper states
   const [showCropper, setShowCropper] = useState(false);
@@ -156,6 +160,7 @@ function App() {
   };
 
   const handleCropSave = useCallback(async () => {
+    if (!croppedAreaPixels) return;
     try {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -435,7 +440,7 @@ function App() {
                             type: 'call',
                             duration: duration,
                             wasConnected: wasConnected,
-                            userId: currentUser.id
+                            userId: currentUser?.id
                           }
                         ]
                       };
