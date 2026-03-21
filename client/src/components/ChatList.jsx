@@ -1,123 +1,139 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import React, { useState, useRef, useMemo } from 'react';
+import { ArrowUp, ArrowDown, Search, Plus } from 'lucide-react';
 
-const ChatList = ({ chats, currentChat, onSelect, getDefaultAvatar }) => {
+const ChatList = ({ chats = [], currentChat, onSelect, getDefaultAvatar }) => {
   const [activeFilter, setActiveFilter] = useState('All');
-  const chatListRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showScrollButtons, setShowScrollButtons] = useState(false);
+  const chatListRef = useRef(null);
+
+  // ফিল্টার এবং সার্চ লজিক (useMemo ব্যবহার করা হয়েছে পারফরম্যান্সের জন্য)
+  const filteredChats = useMemo(() => {
+    return chats.filter(chat => {
+      // সার্চ চেক
+      const matchesSearch = chat.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            chat.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // ট্যাব ফিল্টার চেক
+      if (activeFilter === 'All') return matchesSearch;
+      if (activeFilter === 'Unread') return matchesSearch && chat.unread > 0;
+      if (activeFilter === 'Groups') return matchesSearch && chat.isGroup;
+      if (activeFilter === 'Favourites') return matchesSearch && chat.isFavourite;
+      
+      return matchesSearch;
+    });
+  }, [chats, activeFilter, searchQuery]);
+
+  const handleScroll = (direction) => {
+    if (chatListRef.current) {
+      const scrollAmount = direction === 'up' ? -300 : 300;
+      chatListRef.current.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 min-h-0 bg-[#111b21]">
-      {/* Fixed Search Bar Area */}
-      <div className="p-3 pb-2 bg-[#111b21] z-20 flex-shrink-0 shadow-md border-b border-[#2a3942]/30 relative">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-            <svg className="h-5 w-5 text-[#8696a0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+    <div className="flex flex-col h-full bg-[#111b21] border-r border-[#2a3942]/50">
+      
+      {/* Search Bar */}
+      <div className="p-3 bg-[#111b21] sticky top-0 z-20">
+        <div className="relative group">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className={`h-4 w-4 ${searchQuery ? 'text-[#00a884]' : 'text-[#8696a0]'}`} />
           </div>
           <input 
             type="text" 
-            placeholder="Search on BlackBox Chat" 
-            className="w-full bg-[#202c33] border border-[#2a3942] rounded-lg pl-10 pr-4 py-2 text-[#d1d7db] placeholder-[#8696a0] focus:outline-none focus:border-[#00a884] focus:ring-1 focus:ring-[#00a884] transition-all duration-200 text-sm" 
+            placeholder="Search or start new chat" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#202c33] border-none rounded-lg pl-10 pr-4 py-1.5 text-[#d1d7db] placeholder-[#8696a0] focus:ring-0 text-sm transition-all" 
           />
         </div>
       </div>
 
-      {/* Scrollable Area: Filters + Chat List */}
-      <div className="flex-1 relative">
-        {/* Filter Tags (Now scrolls with content) */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide items-center px-3 pb-2 pt-3">
-          {['All', 'Unread', 'Favourites', 'Groups'].map((filter) => (
-            <button 
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap ${
-                activeFilter === filter 
-                  ? 'bg-[#00a884]/20 text-[#00a884]' 
-                  : 'bg-[#202c33] text-[#8696a0] hover:bg-[#2a3942] hover:text-[#d1d7db]'
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
+      {/* Filter Tabs */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar items-center px-3 pb-3 border-b border-[#2a3942]/30">
+        {['All', 'Unread', 'Favourites', 'Groups'].map((filter) => (
           <button 
-            onClick={() => setActiveFilter('+')}
-            className={`rounded-full p-1.5 transition-colors flex-shrink-0 ${
-              activeFilter === '+' 
-                ? 'bg-[#00a884]/20 text-[#00a884]' 
-                : 'bg-[#202c33] text-[#8696a0] hover:bg-[#2a3942] hover:text-[#d1d7db]'
+            key={filter}
+            onClick={() => setActiveFilter(filter)}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-all whitespace-nowrap ${
+              activeFilter === filter 
+                ? 'bg-[#00a884] text-[#111b21]' 
+                : 'bg-[#202c33] text-[#8696a0] hover:bg-[#2a3942]'
             }`}
           >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path>
-            </svg>
+            {filter}
           </button>
-        </div>
+        ))}
+        <button className="bg-[#202c33] text-[#8696a0] p-1.5 rounded-full hover:bg-[#2a3942]">
+          <Plus size={16} />
+        </button>
+      </div>
 
-        {/* Scroll Up Button */}
+      {/* Chat List Area */}
+      <div className="flex-1 relative overflow-hidden">
+        
+        {/* Scroll Buttons (Only on Hover) */}
         {showScrollButtons && (
-          <button
-            onClick={() => {
-              chatListRef.current.scrollBy({ top: -200, behavior: 'smooth' });
-            }}
-            className="absolute top-2 right-2 bg-[#202c33]/80 text-[#d1d7db] hover:text-white p-2 rounded-full shadow-md z-10 transition-colors duration-200"
-          >
-            <ArrowUp className="w-5 h-5" />
-          </button>
+          <>
+            <button onClick={() => handleScroll('up')} className="absolute top-2 right-4 bg-[#00a884] text-white p-1.5 rounded-full shadow-lg z-30 opacity-80 hover:opacity-100">
+              <ArrowUp size={16} />
+            </button>
+            <button onClick={() => handleScroll('down')} className="absolute bottom-2 right-4 bg-[#00a884] text-white p-1.5 rounded-full shadow-lg z-30 opacity-80 hover:opacity-100">
+              <ArrowDown size={16} />
+            </button>
+          </>
         )}
 
-        {/* Scroll Down Button */}
-        {showScrollButtons && (
-          <button
-            onClick={() => {
-              chatListRef.current.scrollBy({ top: 200, behavior: 'smooth' });
-            }}
-            className="absolute bottom-2 right-2 bg-[#202c33]/80 text-[#d1d7db] hover:text-white p-2 rounded-full shadow-md z-10 transition-colors duration-200"
-          >
-            <ArrowDown className="w-5 h-5" />
-          </button>
-        )}
-
-        {/* Chat List Items */}
         <div
           ref={chatListRef}
-          className="pb-2 flex-1 overflow-y-auto custom-scrollbar hover:custom-scrollbar scrollbar-hide"
+          className="h-full overflow-y-auto custom-scrollbar"
           onMouseEnter={() => setShowScrollButtons(true)}
           onMouseLeave={() => setShowScrollButtons(false)}
-          style={{ maxHeight: 'calc(100% - 80px)' }} // Adjust 80px based on the height of your search/filter area
         >
-
-          {chats.map((chat) => (
-            <div
-              key={chat.id}
-              onClick={() => onSelect(chat)}
-              className={`flex items-center gap-3 p-3 px-4 cursor-pointer hover:bg-[#202c33] transition-colors border-b border-[#2a3942]/50 ${
-                currentChat?.id === chat.id ? 'bg-[#202c33]' : ''
-              }`}
-            >
-              <img 
-                src={chat.avatar || (getDefaultAvatar ? getDefaultAvatar(chat.name) : '')} 
-                alt={chat.name} 
-                className="w-12 h-12 rounded-full object-cover ring-2 ring-[#00a884]/30 shadow-lg flex-shrink-0" 
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex justify-between items-center mb-1">
-                  <div className="font-semibold text-[#e9edef] truncate text-[17px]">{chat.name}</div>
-                  <div className="text-xs text-[#8696a0]">{chat.time}</div>
+          {filteredChats.length > 0 ? (
+            filteredChats.map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => onSelect(chat)}
+                className={`flex items-center gap-3 p-3 px-4 cursor-pointer transition-all border-b border-[#2a3942]/20 ${
+                  currentChat?.id === chat.id ? 'bg-[#2a3942]' : 'hover:bg-[#202c33]'
+                }`}
+              >
+                <div className="relative flex-shrink-0">
+                  <img 
+                    src={chat.avatar || (getDefaultAvatar ? getDefaultAvatar(chat.name) : '')} 
+                    alt="" 
+                    className="w-12 h-12 rounded-full object-cover shadow-md" 
+                  />
+                  {chat.online && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#00a884] border-2 border-[#111b21] rounded-full"></div>}
                 </div>
-                <div className="flex justify-between items-center">
-                  <div className="text-sm text-[#8696a0] truncate flex-1 pr-2">
-                    {chat.lastMessage}
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex justify-between items-center mb-0.5">
+                    <h3 className="font-medium text-[#e9edef] truncate text-base">{chat.name}</h3>
+                    <span className={`text-[11px] ${chat.unread > 0 ? 'text-[#00a884] font-bold' : 'text-[#8696a0]'}`}>
+                      {chat.time}
+                    </span>
                   </div>
-                  {chat.unread > 0 && (
-                    <div className="bg-[#00a884] text-[#111b21] text-[10px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0">
-                      {chat.unread}
-                    </div>
-                  )}
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-[#8696a0] truncate flex-1">
+                      {chat.typing ? <span className="text-[#00a884]">typing...</span> : chat.lastMessage}
+                    </p>
+                    {chat.unread > 0 && (
+                      <span className="bg-[#00a884] text-[#111b21] text-[10px] font-extrabold min-w-[18px] h-[18px] rounded-full flex items-center justify-center ml-2">
+                        {chat.unread}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-[#8696a0] px-6 text-center">
+              <p className="text-sm">No chats found</p>
             </div>
-          ))}        
+          )}
         </div>
       </div>
     </div>

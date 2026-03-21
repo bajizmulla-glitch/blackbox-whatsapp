@@ -1,143 +1,119 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Heart, MessageCircle, Share2, MoreVertical, Play, Pause } from 'lucide-react';
 
 const mockShorts = [
-  {
-    id: 1,
-    url: '',
-    user: 'creator1',
-    likes: 1234,
-    comments: 56,
-    description: '#blackbox #neon #shorts Fire!',
-  },
-  {
-    id: 2,
-    url: '',
-    user: 'neonvibes',
-    likes: 2890,
-    comments: 124,
-    description: 'Glowing in the dark ✨ #whatsappclone #react',
-  },
-  {
-    id: 3,
-    url: '',
-    user: 'codewithgreen',
-    likes: 4567,
-    comments: 89,
-    description: 'Neon green forever 💚 #coding #javascript',
-  },
-  {
-    id: 4,
-    url: '',
-    user: 'darkmodefan',
-    likes: 1987,
-    comments: 67,
-    description: 'Dark theme appreciation post 🌑',
-  },
-  {
-    id: 5,
-    url: '',
-    user: 'shortsaddict',
-    likes: 3345,
-    comments: 102,
-    description: 'Can\'t stop scrolling... #addict #tiktokclone',
-  },
+  { id: 1, user: 'creator1', likes: '1.2k', comments: 56, description: '#blackbox #neon #shorts Fire!', color: 'from-blue-600/20 to-purple-600/20' },
+  { id: 2, user: 'neonvibes', likes: '2.8k', comments: 124, description: 'Glowing in the dark ✨ #whatsappclone', color: 'from-green-600/20 to-teal-600/20' },
+  { id: 3, user: 'codewithgreen', likes: '4.5k', comments: 89, description: 'Neon green forever 💚 #coding', color: 'from-emerald-600/20 to-lime-600/20' },
+  { id: 4, user: 'darkmodefan', likes: '1.9k', comments: 67, description: 'Dark theme appreciation post 🌑', color: 'from-gray-600/20 to-slate-900/20' },
 ];
+
+const ShortItem = ({ short, isActive }) => {
+  return (
+    <div className="relative w-full h-screen snap-start bg-[#0b141a] flex flex-col items-center justify-center overflow-hidden">
+      {/* Video Content Placeholder */}
+      <div className={`w-full h-full bg-gradient-to-br ${short.color} flex items-center justify-center relative`}>
+        {/* Play/Pause Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center">
+           {isActive ? (
+             <div className="animate-ping opacity-20"><Play size={80} /></div>
+           ) : (
+             <Pause size={40} className="text-white/20" />
+           )}
+        </div>
+
+        {/* Floating Badges */}
+        <div className="absolute top-10 left-6 flex items-center gap-2">
+          <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">LIVE</div>
+          <span className="text-white/70 text-sm backdrop-blur-md bg-black/20 px-2 py-0.5 rounded">
+            {isActive ? 'Watching' : 'Paused'}
+          </span>
+        </div>
+      </div>
+
+      {/* Interaction Side Bar */}
+      <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-10">
+        <div className="flex flex-col items-center gap-1 group cursor-pointer">
+          <div className="p-3 bg-white/10 backdrop-blur-lg rounded-full group-hover:bg-red-500/20 transition-all">
+            <Heart size={28} className="text-white group-hover:fill-red-500 group-hover:text-red-500" />
+          </div>
+          <span className="text-xs text-white font-medium">{short.likes}</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-1 group cursor-pointer">
+          <div className="p-3 bg-white/10 backdrop-blur-lg rounded-full group-hover:bg-blue-500/20 transition-all">
+            <MessageCircle size={28} className="text-white group-hover:text-blue-400" />
+          </div>
+          <span className="text-xs text-white font-medium">{short.comments}</span>
+        </div>
+
+        <div className="p-3 bg-white/10 backdrop-blur-lg rounded-full cursor-pointer hover:bg-white/20 transition-all">
+          <Share2 size={28} className="text-white" />
+        </div>
+
+        <div className="p-3 bg-white/10 backdrop-blur-lg rounded-full cursor-pointer hover:bg-white/20 transition-all">
+          <MoreVertical size={28} className="text-white" />
+        </div>
+      </div>
+
+      {/* Bottom Info Section */}
+      <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#00a884] to-blue-500 p-0.5">
+            <div className="w-full h-full rounded-full bg-black border-2 border-black" />
+          </div>
+          <span className="font-bold text-white">@{short.user}</span>
+          <button className="ml-2 border border-white/50 px-3 py-1 rounded-full text-xs font-bold text-white hover:bg-white hover:text-black transition-all">
+            Follow
+          </button>
+        </div>
+        <p className="text-sm text-gray-200 line-clamp-2 max-w-[80%] leading-relaxed">
+          {short.description}
+        </p>
+      </div>
+      
+      {/* Progress Bar */}
+      <div className="absolute bottom-0 left-0 h-1 bg-[#00a884] transition-all duration-[5000ms] ease-linear" 
+           style={{ width: isActive ? '100%' : '0%' }} />
+    </div>
+  );
+};
 
 const Shorts = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const shortsRef = useRef(null);
+  const containerRef = useRef(null);
 
+  // Intersection Observer to detect current short
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % mockShorts.length);
-    }, 5000);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = parseInt(entry.target.getAttribute('data-index'));
+            setCurrentIndex(index);
+          }
+        });
+      },
+      { threshold: 0.7 } // স্ক্রিনের ৭০% কাভার করলে একটিভ হবে
+    );
 
-    return () => clearInterval(interval);
+    const elements = containerRef.current.querySelectorAll('.short-container');
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    shortsRef.current?.scrollTo({
-      top: currentIndex * window.innerHeight,
-      behavior: 'smooth',
-    });
-  }, [currentIndex]);
-
-  const ShortItem = ({ short, isActive }) => (
-    <div className="w-full h-screen flex flex-col justify-between p-8 relative overflow-hidden group">
-      {/* Mock Video - Animated gradient */}
-      <div className="flex-1 w-full rounded-2xl bg-gradient-to-br from-facebook/primary/20 via-blue-500/20 to-indigo-500/20 animate-pulse-wave shadow-2xl shadow-facebook/primary/25 group-hover:animate-[pulse_2s_ease-in-out_infinite] relative">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        <div className="absolute top-8 left-8 bg-facebook/primary/90 text-facebook/card px-4 py-2 rounded-full font-bold text-sm">
-          ▶ {isActive ? 'PAUSED' : 'PLAYING'}
-        </div>
-      </div>
-
-      {/* Bottom Content */}
-      <div className="space-y-4 pt-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <img
-              className="w-12 h-12 rounded-full bg-gradient-to-r from-facebook/primary to-facebook/primaryDark border-4 border-facebook/card/50"
-              alt="Creator"
-            />
-            <div>
-              <div className="font-bold text-white text-lg">{short.user}</div>
-              <div className="text-gray-400 text-sm">{short.description}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Interactions */}
-        <div className="flex space-x-6">
-          <button className="group relative p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all">
-            <svg className="w-8 h-8 text-white group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 21.638h-.014C9.403 21.59 1.95 14.856 1.95 8.478c0-3.064 2.525-5.754 5.403-5.754 2.29 0 3.83 1.58 4.646 2.73.814-1.148 2.354-2.73 4.645-2.73 2.88 0 5.404 2.69 5.404 5.755 0 6.376-7.454 13.11-10.037 13.157h-.008z"/>
-            </svg>
-            <span className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-black/90 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all">
-              {short.likes.toLocaleString()}
-            </span>
-          </button>
-          
-          <button className="p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </button>
-          
-          <button className="p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-1 1z" />
-            </svg>
-            <span className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-black/90 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all">
-              {short.comments}
-            </span>
-          </button>
-
-          <button className="p-4 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all ml-auto">
-            <svg className="w-8 h-8 text-facebook/primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Active indicator */}
-      {isActive && (
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-facebook/primary text-facebook/card px-6 py-2 rounded-full font-bold shadow-2xl shadow-facebook/primary/50 animate-bounce">
-          👀 NOW PLAYING
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div 
-      ref={shortsRef}
-      className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth scrollbar-hide"
-      style={{ scrollSnapType: 'y mandatory' }}
+      ref={containerRef}
+      className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-black"
     >
       {mockShorts.map((short, index) => (
-        <div key={short.id} className="snap-start h-screen flex-shrink-0">
+        <div 
+          key={short.id} 
+          data-index={index}
+          className="short-container h-screen snap-start"
+        >
           <ShortItem short={short} isActive={index === currentIndex} />
         </div>
       ))}

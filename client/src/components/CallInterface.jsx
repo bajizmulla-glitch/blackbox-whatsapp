@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Phone, Mic, MicOff, Video, VideoOff, ChevronDown, Maximize2, SwitchCamera, Minimize2 } from 'lucide-react';
+import { Phone, Mic, MicOff, Video, VideoOff, ChevronDown, Maximize2, SwitchCamera } from 'lucide-react';
 
 const CallInterface = ({ contact, onEndCall, getDefaultAvatar, isVideoCall, isMinimized, onToggleMinimize }) => {
   const [duration, setDuration] = useState(0);
@@ -7,189 +7,134 @@ const CallInterface = ({ contact, onEndCall, getDefaultAvatar, isVideoCall, isMi
   const [isVideoOn, setIsVideoOn] = useState(isVideoCall || false);
   const [localStream, setLocalStream] = useState(null);
   const [facingMode, setFacingMode] = useState('user');
+  const [status, setStatus] = useState('Calling...');
+  
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  const [status, setStatus] = useState('Calling...');
 
+  // কল স্ট্যাটাস সিমুলেশন
   useEffect(() => {
-    const timer1 = setTimeout(() => setStatus('Ringing...'), 1500);
-    return () => { clearTimeout(timer1); };
+    const timer = setTimeout(() => setStatus('Ringing...'), 1500);
+    const connectTimer = setTimeout(() => setStatus('Connected'), 4000); // ৪ সেকেন্ড পর অটো কানেক্ট (টেস্টিং এর জন্য)
+    return () => { clearTimeout(timer); clearTimeout(connectTimer); };
   }, []);
 
+  // কল ডিউরেশন টাইমার
   useEffect(() => {
     let interval;
     if (status === 'Connected') {
-      interval = setInterval(() => {
-        setDuration(prev => prev + 1);
-      }, 1000);
+      interval = setInterval(() => setDuration(prev => prev + 1), 1000);
     }
     return () => clearInterval(interval);
   }, [status]);
 
+  // ক্যামেরা এবং মাইক্রোফোন কন্ট্রোল
   useEffect(() => {
-    let stream = null;
     let isCancelled = false;
 
-    const startCamera = async () => {
-      if (isVideoOn) {
-        try {
+    const manageMedia = async () => {
+      try {
+        if (isVideoOn) {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: facingMode }, 
+            audio: !isMuted 
+          });
+          if (!isCancelled) setLocalStream(stream);
+        } else {
           if (localStream) {
             localStream.getTracks().forEach(track => track.stop());
+            setLocalStream(null);
           }
-          const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode }, audio: true });
-          if (!isCancelled) {
-            stream = s;
-            setLocalStream(s);
-          } else {
-            s.getTracks().forEach(track => track.stop());
-          }
-        } catch (err) {
-          console.error("Error accessing camera:", err);
-          if (!isCancelled) setIsVideoOn(false);
         }
-      } else {
-        if (localStream) {
-          localStream.getTracks().forEach(track => track.stop());
-        }
-        setLocalStream(null);
+      } catch (err) {
+        console.error("Media Access Denied:", err);
+        setIsVideoOn(false);
       }
     };
-    startCamera();
-    return () => {
-      isCancelled = true;
-      if (stream) stream.getTracks().forEach(track => track.stop());
-    };
+
+    manageMedia();
+    return () => { isCancelled = true; };
   }, [isVideoOn, facingMode]);
 
+  // ভিডিও স্ট্রিম অ্যাসাইন করা
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
-    if (status === 'Connected' && remoteVideoRef.current && localStream) {
-      remoteVideoRef.current.srcObject = localStream;
-    }
-  }, [localStream, status, isMinimized]); // isMinimized যোগ করা হয়েছে যাতে স্ক্রিন ছোট/বড় করলে ভিডিও আবার লোড হয়
+  }, [localStream, isMinimized]);
 
   const formatTime = (secs) => {
     const mins = Math.floor(secs / 60);
-    const seconds = secs % 60;
-    return `${mins.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const s = secs % 60;
+    return `${mins.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // --- MINIMIZED VIEW ---
+  // --- ছোট উইন্ডো ভিউ (Minimized) ---
   if (isMinimized) {
     return (
-      <div className="w-full h-full relative bg-[#202c33] flex items-center justify-center overflow-hidden group">
-        {/* Main Content (Video or Avatar) */}
-        {status === 'Connected' && isVideoOn ? (
-          <video 
-            ref={remoteVideoRef} 
-            autoPlay 
-            playsInline 
-            className="w-full h-full object-cover" 
-          />
-        ) : isVideoOn && localStream ? (
-          <video 
-            ref={localVideoRef} 
-            autoPlay 
-            muted 
-            playsInline 
-            className="w-full h-full object-cover transform -scale-x-100" 
-          />
+      <div className="w-full h-full relative bg-[#202c33] flex items-center justify-center overflow-hidden group rounded-xl shadow-2xl">
+        {isVideoOn && localStream ? (
+          <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform -scale-x-100" />
         ) : (
           <div className="flex flex-col items-center">
             <img 
-              src={contact?.avatar || (getDefaultAvatar ? getDefaultAvatar(contact?.name || 'User') : '')} 
-              alt={contact?.name} 
-              className="w-16 h-16 rounded-full border-2 border-[#37404a] mb-2"
+              src={contact?.avatar || (getDefaultAvatar && getDefaultAvatar(contact?.name))} 
+              className="w-12 h-12 rounded-full mb-1" alt=""
             />
-            <p className="text-white text-xs font-medium">{status === 'Connected' ? formatTime(duration) : status}</p>
+            <p className="text-[10px]">{status === 'Connected' ? formatTime(duration) : status}</p>
           </div>
         )}
-
-        {/* Overlay Controls (Visible on Hover) */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-          <div className="flex justify-end">
-            <button onClick={onToggleMinimize} className="p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70">
-              <Maximize2 className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex justify-center gap-3">
-             <button onClick={() => setIsMuted(!isMuted)} className={`p-2 rounded-full ${isMuted ? 'bg-white text-black' : 'bg-[#37404a] text-white'}`}>
-               {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-             </button>
-             <button onClick={() => onEndCall(formatTime(duration), status === 'Connected')} className="p-2 rounded-full bg-red-500 text-white">
-               <Phone className="w-4 h-4 transform rotate-[135deg]" />
-             </button>
-          </div>
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          <button onClick={onToggleMinimize} className="p-1 bg-white/20 rounded-full"><Maximize2 size={16}/></button>
+          <button onClick={() => onEndCall()} className="p-1 bg-red-500 rounded-full"><Phone size={16} className="rotate-[135deg]"/></button>
         </div>
       </div>
     );
   }
 
-  // --- FULL SCREEN VIEW ---
+  // --- ফুল স্ক্রিন ভিউ ---
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-[#0b141a] relative text-[#e9edef] h-full w-full animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[999] bg-[#0b141a] flex flex-col items-center justify-between py-12 text-white font-sans">
       
-      {/* Header Buttons */}
-      <div className="absolute top-4 right-4 z-50 flex gap-4">
-        <button onClick={onToggleMinimize} className="p-2 rounded-full bg-[#202c33]/60 hover:bg-[#202c33] transition-colors text-white border border-white/5" title="Minimize">
-          <ChevronDown className="w-6 h-6" />
-        </button>
+      {/* মাইনোমাইজ বাটন */}
+      <button onClick={onToggleMinimize} className="absolute top-6 left-6 p-2 hover:bg-white/10 rounded-full transition-colors">
+        <ChevronDown size={32} />
+      </button>
+
+      {/* ইউজার ইনফো */}
+      <div className="flex flex-col items-center gap-4">
+        <div className={`relative transition-all duration-500 ${isVideoOn ? 'w-40 h-40' : 'w-32 h-32'}`}>
+          {isVideoOn && localStream ? (
+            <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover rounded-2xl border-2 border-white/10 transform -scale-x-100" />
+          ) : (
+            <img src={contact?.avatar || (getDefaultAvatar && getDefaultAvatar(contact?.name))} className="w-full h-full rounded-full border-4 border-[#202c33]" alt="" />
+          )}
+        </div>
+        <div className="text-center">
+          <h2 className="text-3xl font-bold">{contact?.name || 'User'}</h2>
+          <p className="text-[#8696a0] text-lg mt-1">{status === 'Connected' ? formatTime(duration) : status}</p>
+        </div>
       </div>
 
-      {status === 'Connected' && isVideoOn ? (
-        /* Connected Video View */
-        <div className="absolute inset-0 w-full h-full bg-black z-0">
-          <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover opacity-80" />
-          
-          {/* PIP Local Video */}
-          <div className="absolute bottom-32 right-6 w-40 h-60 bg-[#202c33] rounded-xl overflow-hidden shadow-2xl border-2 border-[#37404a] z-10">
-             {localStream ? (
-               <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform -scale-x-100" />
-             ) : (
-               <div className="w-full h-full flex items-center justify-center bg-[#37404a]"><VideoOff className="w-8 h-8 text-[#8696a0]" /></div>
-             )}
-             <button onClick={(e) => { e.stopPropagation(); setFacingMode(prev => prev === 'user' ? 'environment' : 'user'); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white">
-               <SwitchCamera className="w-4 h-4" />
-             </button>
-          </div>
-        </div>
-      ) : (
-        /* Calling / No Video UI */
-        <div className="flex flex-col items-center z-10 gap-6 mb-20">
-          <div className={`overflow-hidden border-4 border-[#202c33] shadow-2xl relative transition-all duration-300 ${isVideoOn ? 'w-80 h-80 rounded-2xl' : 'w-32 h-32 rounded-full'}`}>
-             {isVideoOn && localStream ? (
-               <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover transform -scale-x-100" />
-             ) : (
-               <img src={contact?.avatar || (getDefaultAvatar ? getDefaultAvatar(contact?.name || 'User') : '')} alt={contact?.name} className="w-full h-full object-cover" />
-             )}
-             {isVideoOn && (
-               <div className="absolute bottom-3 right-3 z-50">
-                 <button onClick={() => setFacingMode(prev => prev === 'user' ? 'environment' : 'user')} className="p-2 rounded-full bg-black/40 hover:bg-black/60 text-white">
-                   <SwitchCamera className="w-5 h-5" />
-                 </button>
-               </div>
-             )}
-          </div>
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl font-semibold">{contact?.name || 'Unknown'}</h2>
-            <p className="text-[#8696a0] text-lg font-medium">{status === 'Connected' ? formatTime(duration) : status}</p>
-          </div>
-        </div>
-      )}
+      {/* মেইন কন্ট্রোল বার */}
+      <div className="flex items-center gap-6 bg-[#202c33] p-6 rounded-full shadow-2xl border border-white/5">
+        <button onClick={() => setIsMuted(!isMuted)} className={`p-4 rounded-full ${isMuted ? 'bg-white text-black' : 'bg-[#3b4a54]'}`}>
+          {isMuted ? <MicOff /> : <Mic />}
+        </button>
+        
+        <button onClick={() => onEndCall()} className="p-5 bg-red-500 rounded-full hover:bg-red-600 transition-transform active:scale-90">
+          <Phone size={32} className="rotate-[135deg]" />
+        </button>
 
-      {/* Main Controls */}
-      <div className="absolute bottom-12 flex items-center gap-8 bg-[#202c33] px-8 py-4 rounded-3xl shadow-xl border border-[#2a3942] z-20">
-        <button onClick={() => setIsMuted(!isMuted)} className={`p-4 rounded-full transition-all ${isMuted ? 'bg-[#e9edef] text-[#0b141a]' : 'bg-[#37404a] text-[#e9edef] hover:bg-[#455a64]'}`}>
-          {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+        <button onClick={() => setIsVideoOn(!isVideoOn)} className={`p-4 rounded-full ${isVideoOn ? 'bg-white text-black' : 'bg-[#3b4a54]'}`}>
+          {isVideoOn ? <Video /> : <VideoOff />}
         </button>
-        <button onClick={() => setIsVideoOn(!isVideoOn)} className={`p-4 rounded-full transition-all ${isVideoOn ? 'bg-[#e9edef] text-[#0b141a]' : 'bg-[#37404a] text-[#e9edef] hover:bg-[#455a64]'}`}>
-          {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
-        </button>
-        <button onClick={() => onEndCall(formatTime(duration), status === 'Connected')} className="p-4 rounded-full bg-[#ef4444] text-white hover:bg-[#dc2626] transform hover:scale-110 shadow-lg">
-          <Phone className="w-8 h-8 transform rotate-[135deg]" />
-        </button>
+
+        {isVideoOn && (
+          <button onClick={() => setFacingMode(f => f === 'user' ? 'environment' : 'user')} className="p-4 bg-[#3b4a54] rounded-full">
+            <SwitchCamera />
+          </button>
+        )}
       </div>
     </div>
   );

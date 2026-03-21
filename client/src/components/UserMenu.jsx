@@ -1,102 +1,106 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Download, Settings, LogOut, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Heart, MessageCircle, Share2, MoreVertical, Play } from 'lucide-react';
 
-const UserMenu = ({ currentUser, getDefaultAvatar, onLogout, onSettings }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-  
-  const handleWhatsAppDownload = () => {
-    window.open('https://www.whatsapp.com/download', '_blank');
-  };
+const mockShorts = [
+  { id: 1, user: 'creator1', likes: '1.2k', comments: 56, description: '#blackbox #neon #shorts Fire!', color: 'from-blue-600/20 to-purple-600/20' },
+  { id: 2, user: 'neonvibes', likes: '2.8k', comments: 124, description: 'Glowing in the dark ✨ #react', color: 'from-green-600/20 to-teal-600/20' },
+  { id: 3, user: 'codewithgreen', likes: '4.5k', comments: 89, description: 'Neon green 💚 #coding', color: 'from-emerald-600/20 to-lime-600/20' },
+];
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+const ShortItem = ({ short, isActive }) => {
+  const [liked, setLiked] = useState(false);
 
   return (
-    <div className="bg-[#111b21] border-t border-[#2a3942] p-3">
-      {/* WhatsApp Download Section */}
-      <div className="mb-3 p-3 bg-gradient-to-r from-[#25d366]/10 to-[#00a884]/10 rounded-lg border border-[#25d366]/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#25d366] rounded-full flex items-center justify-center">
-              <Download className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="text-[#d9dedb] text-sm font-medium">WhatsApp for Desktop</p>
-              <p className="text-[#8696a0] text-xs">Download & chat on PC/Mac</p>
-            </div>
+    <div className="relative w-full h-screen snap-start bg-[#0b141a] flex flex-col overflow-hidden border-b border-[#2a3942]">
+      <div className={`flex-1 w-full bg-gradient-to-br ${short.color} flex items-center justify-center relative group`}>
+        {isActive && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <Play size={60} className="text-white/10 animate-ping" />
           </div>
-          <button
-            onClick={handleWhatsAppDownload}
-            className="px-3 py-1.5 bg-[#25d366] hover:bg-[#20bd5a] text-white text-xs font-medium rounded-md transition-colors duration-200"
-          >
-            Download
-          </button>
+        )}
+        
+        {/* Interaction Side Bar */}
+        <div className="absolute right-4 bottom-28 flex flex-col gap-6 z-20">
+          <div className="flex flex-col items-center gap-1 cursor-pointer group" onClick={() => setLiked(!liked)}>
+            <div className={`p-3 rounded-full backdrop-blur-md transition-all ${liked ? 'bg-red-500/20 scale-110' : 'bg-white/10 group-hover:bg-white/20'}`}>
+              <Heart size={28} className={liked ? 'fill-red-500 text-red-500' : 'text-white'} />
+            </div>
+            <span className="text-xs text-white font-bold">{short.likes}</span>
+          </div>
+
+          <div className="flex flex-col items-center gap-1 cursor-pointer group">
+            <div className="p-3 bg-white/10 backdrop-blur-md rounded-full group-hover:bg-white/20 transition-all">
+              <MessageCircle size={28} className="text-white" />
+            </div>
+            <span className="text-xs text-white font-bold">{short.comments}</span>
+          </div>
+
+          <div className="p-3 bg-white/10 backdrop-blur-md rounded-full cursor-pointer hover:bg-white/20 transition-all">
+            <Share2 size={28} className="text-white" />
+          </div>
+
+          <div className="p-3 bg-white/10 backdrop-blur-md rounded-full cursor-pointer hover:bg-white/20 transition-all">
+            <MoreVertical size={28} className="text-white" />
+          </div>
+        </div>
+
+        {/* Info Section */}
+        <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#00a884] to-blue-500 p-0.5 shadow-lg">
+               <div className="w-full h-full rounded-full bg-black border-2 border-black" />
+            </div>
+            <span className="font-bold text-white text-lg">@{short.user}</span>
+            <button className="ml-2 bg-[#00a884] text-[#111b21] px-4 py-1 rounded-full text-xs font-bold hover:bg-[#06cf9c] transition-all active:scale-95">Follow</button>
+          </div>
+          <p className="text-sm text-gray-200 max-w-[85%] leading-relaxed line-clamp-2">{short.description}</p>
         </div>
       </div>
-
-      {/* User Profile Section */}
-      <div className="flex items-center justify-between">
+      
+      {/* Visual Progress Bar */}
+      <div className="h-[3px] bg-[#2a3942] w-full overflow-hidden">
         <div 
-          className="flex items-center gap-3 cursor-pointer hover:bg-[#2a3942] rounded-lg p-2 transition-colors duration-200"
-          onClick={onSettings}
-        >
-          <img 
-            src={currentUser?.avatar || getDefaultAvatar(currentUser?.name || 'User')}
-            alt="Profile"
-className="w-10 h-10 rounded-full object-cover border-2 border-[#25d366] flex items-center justify-center overflow-hidden font-semibold text-sm bg-gradient-to-br from-gray-600 to-gray-700 text-white relative z-10"
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-[#d9dedb] text-sm font-medium truncate">
-              {currentUser?.name || 'Your Name'}
-            </p>
-            <p className="text-[#8696a0] text-xs">Click to edit profile</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={onSettings}
-            className="p-2 text-[#8696a0] hover:text-[#d9dedb] hover:bg-[#2a3942] rounded-lg transition-colors duration-200"
-            title="Settings"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={onLogout}
-            className="p-2 text-[#8696a0] hover:text-[#ef5350] hover:bg-[#2a3942] rounded-lg transition-colors duration-200"
-            title="Logout"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
-          <div className="relative" ref={menuRef}>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-              className="p-2 text-[#8696a0] hover:text-[#d9dedb] hover:bg-[#2a3942] rounded-lg transition-colors duration-200"
-              title="More"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-            {menuOpen && (
-              <div className="absolute bottom-12 right-0 w-40 bg-[#233138] rounded-md shadow-lg z-50 py-2 border border-[#2a3942]">
-                <div className="px-4 py-2 text-xs text-[#8696a0] border-b border-[#2a3942]">
-                  More options
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
+          className="h-full bg-[#00a884] transition-all linear shadow-[0_0_10px_#00a884]" 
+          style={{ 
+            width: isActive ? '100%' : '0%',
+            transitionDuration: isActive ? '5000ms' : '0ms' 
+          }} 
+        />
       </div>
     </div>
   );
 };
 
-export default UserMenu;
+const Shorts = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setCurrentIndex(parseInt(entry.target.getAttribute('data-index')));
+          }
+        });
+      },
+      { threshold: 0.7 }
+    );
+
+    const cards = containerRef.current.querySelectorAll('.short-card');
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-black">
+      {mockShorts.map((short, index) => (
+        <div key={short.id} data-index={index} className="short-card h-screen snap-start">
+          <ShortItem short={short} isActive={index === currentIndex} />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default Shorts;

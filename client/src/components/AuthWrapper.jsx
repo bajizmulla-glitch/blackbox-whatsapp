@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
-import Login from './Login';
-import Signup from './Signup';
+import Login from '../pages/Login'; // পাথ ঠিক আছে কি না চেক করে নিন
+import Signup from '../pages/Signup';
 
-const AuthWrapper = () => {
+const AuthWrapper = ({ onAuthSuccess }) => {
   const [view, setView] = useState('login'); // 'login' | 'signup'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0b141a] via-[#111b21] to-[#202c33] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0b141a]">
       {view === 'login' ? (
-        <Login onSwitchToSignup={() => setView('signup')} />
+        <Login 
+          onLoginSuccess={onAuthSuccess} 
+          onSwitchToSignup={() => setView('signup')} 
+        />
       ) : (
-        <Signup onSwitchToLogin={() => setView('login')} />
+        <Signup 
+          onSwitchToLogin={() => setView('login')} 
+        />
       )}
     </div>
   );
