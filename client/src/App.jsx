@@ -1,558 +1,72 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import AuthWrapper from './components/AuthWrapper';
-import Cropper from 'react-easy-crop';
-import Chat from './components/Chat';
-import ChatList from './components/ChatList';
-import Shorts from './components/Shorts';
-import CallHistory from './components/CallHistory';
-import CallInterface from './components/CallInterface';
-import UserMenu from './components/UserMenu';
-import NewGroup from './components/NewGroup';
-import { MessageCircle, Megaphone, Users, Phone } from 'lucide-react';
-import io from 'socket.io-client';
 import './index.css';
-
-const socket = io('http://localhost:3001');
-
-// Trimmed mock chats to prevent bloat (first 10 only)
-const mockChats = [
-  { id: 'general', name: 'General Chat', avatar: null, lastMessage: 'BlackBox Chate!', time: '10:30', unread: 2 },
-  { id: 'friends', name: 'Friends Group', avatar: null, lastMessage: 'See you tomorrow!', time: '09:15', unread: 0 },
-  { id: 'work', name: 'Work Team', avatar: null, lastMessage: 'My Fast Job', time: 'Yesterday', unread: 5 },
-  { id: 'mahin', name: 'Mahin', avatar: null, lastMessage: 'Kire mama ki obostha?', time: '01:23 AM', unread: 1 },
-  { id: 'zihan', name: 'Zihan', avatar: null, lastMessage: 'Project ta kobe submit korbi?', time: '12:08 AM', unread: 0 },
-  { id: 'felix', name: 'Felix', avatar: null, lastMessage: 'Meeting postponed.', time: '12:07 AM', unread: 0 },
-  { id: 'rasel', name: 'Rasel', avatar: null, lastMessage: 'Done.', time: '12:07 AM', unread: 0 },
-  { id: 'rahat', name: 'Rahat', avatar: null, lastMessage: 'Okay, I will check.', time: '12:07 AM', unread: 0 },
-  { id: 'mom', name: 'Mom', avatar: null, lastMessage: 'Call me when you are free.', time: '12:00 AM', unread: 3 },
-  { id: 'c1', name: 'Alice', avatar: null, lastMessage: 'Hey there!', time: 'Yesterday', unread: 0 }
-];
-
-const getDefaultAvatar = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`;
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
-  // Strict authentication check at top - remains active
   useEffect(() => {
-    const savedUserStr = localStorage.getItem('user');
-    if (!savedUserStr) {
-      setIsAuthenticated(false);
-      setCurrentUser(null);
-      setIsLoadingAuth(false);
-      return;
-    }
-    
-    try {
-      const savedUser = JSON.parse(savedUserStr);
-      if (savedUser && (savedUser.email || savedUser?.name)) {
-        setCurrentUser(savedUser);
-        setIsAuthenticated(true);
-      } else {
-        localStorage.removeItem('user');
-        setIsAuthenticated(false);
-        setCurrentUser(null);
-      }
-    } catch (e) {
-      localStorage.removeItem('user');
-      setIsAuthenticated(false);
-      setCurrentUser(null);
-    } finally {
-      setIsLoadingAuth(false);
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setCurrentUser(JSON.parse(savedUser));
     }
   }, []);
-
-  // CRITICAL: Show ONLY AuthWrapper if not authenticated (fixes white screen for unauth users)
-  if (isLoadingAuth || !isAuthenticated || !currentUser) {
-    return <AuthWrapper />;
-  }
-
-  const [activeTab, setActiveTab] = useState('chats');
-  const [currentChat, setCurrentChat] = useState(null);
-  const [chats, setChats] = useState(() => {
-    const savedChats = localStorage.getItem('chats');
-    if (!savedChats) return mockChats;
-    
-    const parsedSaved = JSON.parse(savedChats);
-    const savedIds = new Set(parsedSaved.map(c => c.id));
-    const newMockChats = mockChats.filter(c => !savedIds.has(c.id));
-    return [...parsedSaved, ...newMockChats];
-  });
-  const [userId, setUserId] = useState(null);
-  const [viewMode, setViewMode] = useState('chat');
-  const [showNewGroup, setShowNewGroup] = useState(false);
-  const [activeCall, setActiveCall] = useState(null);
-  const [isCallMinimized, setIsCallMinimized] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const isDraggingRef = useRef(false);
-  const dragStartRef = useRef({ x: 0, y: 0 });
-
-  // Cropper states
-  const [showCropper, setShowCropper] = useState(false);
-  const [cropImage, setCropImage] = useState('');
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     setCurrentUser(null);
-    setIsAuthenticated(false);
-    setUserId(null);
   };
 
-  const handleSelectChat = (chat) => {
-    setCurrentChat(chat);
-    if (activeCall) {
-      setIsCallMinimized(activeCall.id !== chat.id);
-    }
-  };
-
-  const handleStartChat = (contact) => {
-    let existingChat = chats.find(c => c.name === contact.name);
-    if (!existingChat) {
-      existingChat = {
-        id: contact.id,
-        name: contact.name,
-        avatar: contact.avatar,
-        lastMessage: '',
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}),
-        unread: 0
-      };
-      setChats(prev => [existingChat, ...prev]);
-    }
-    setCurrentChat(existingChat);
-    setActiveTab('chats');
-    setViewMode('chat');
-
-    if (activeCall) {
-      setIsCallMinimized(activeCall.id !== contact.id);
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setCropImage(event.target.result);
-        setShowCropper(true);
-      };
-      reader.readAsDataURL(file);
-    }
-    e.target.value = '';
-  };
-
-  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
-
-  // FIXED: createImage function moved inside component scope + typos fixed
-  const createImage = (url) => {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.addEventListener('load', () => resolve(image));
-      image.addEventListener('error', reject);
-      image.src = url;
-    });
-  };
-
-  const handleCropSave = useCallback(async () => {
-    if (!croppedAreaPixels) return;
-    try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const image = await createImage(cropImage);
-
-      // FIXED: Typo corrections - croppedAreaPixels (not croppedpped...)
-      canvas.width = croppedAreaPixels.width;
-      canvas.height = croppedAreaPixels.height;  // FIXED height typo
-
-      ctx.drawImage(
-        image,
-        croppedAreaPixels.x,
-        croppedAreaPixels.y,
-        croppedAreaPixels.width,
-        croppedAreaPixels.height,
-        0,
-        0,
-        croppedAreaPixels.width,
-        croppedAreaPixels.height
-      );
-
-      canvas.toBlob((blob) => {
-        console.log('Image captured, ready for MongoDB/Google Sheets:', blob);
-        setCurrentUser(prev => ({ ...prev, avatar: URL.createObjectURL(blob) }));
-      }, 'image/jpeg', 0.8);
-    } catch (e) {
-      console.error('Crop error:', e);
-    }
-
-    setShowCropper(false);
-    setCropImage('');
-    setCroppedAreaPixels(null);
-  }, [cropImage, croppedAreaPixels, setCurrentUser]);
-
-  useEffect(() => {
-    localStorage.setItem('user', JSON.stringify(currentUser));
-  }, [currentUser]);
-
-  useEffect(() => {
-    localStorage.setItem('chats', JSON.stringify(chats));
-  }, [chats]);
-
-  // Dragging logic for minimized call window
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!isDraggingRef.current) return;
-      e.preventDefault();
-      setDragOffset({
-        x: e.clientX - dragStartRef.current.x,
-        y: e.clientY - dragStartRef.current.y
-      });
-    };
-
-    const handleMouseUp = () => {
-      isDraggingRef.current = false;
-    };
-
-    if (isCallMinimized) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isCallMinimized]);
-
-  const handleDragStart = (e) => {
-    if (!isCallMinimized) return;
-    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-    
-    isDraggingRef.current = true;
-    dragStartRef.current = {
-      x: e.clientX - dragOffset.x,
-      y: e.clientY - dragOffset.y
-    };
-  };
-
-  const renderMainContent = () => {
-    switch (activeTab) {
-      case 'chats':
-        if (showNewGroup) {
-          return (
-            <div className="flex-1 h-full w-full border-l border-[#2a3942] bg-[#0b141a] overflow-hidden">
-              <NewGroup 
-                onBack={() => setShowNewGroup(false)} 
-                contacts={chats}
-                getDefaultAvatar={getDefaultAvatar}
-              />
-            </div>
-          );
-        }
-        if (!currentChat) {
-          return (
-            <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden ml-4 md:ml-0 h-full text-center p-10 bg-[#111b21]">
-              {/* Animated Background Blobs */}
-              <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[20%] left-[20%] w-72 h-72 bg-[#00a884] rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob"></div>
-                <div className="absolute top-[20%] right-[20%] w-72 h-72 bg-[#25d366] rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob animation-delay-2000"></div>
-                <div className="absolute bottom-[20%] left-[30%] w-72 h-72 bg-[#005c4b] rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob animation-delay-4000"></div>
-              </div>
-
-              {/* Main Content Card */}
-              <div className="relative z-10 max-w-[600px] bg-[#202c33]/40 backdrop-blur-lg p-10 rounded-[2rem] border border-[#2a3942]/50 shadow-[0_0_50px_-12px_rgba(0,168,132,0.2)] flex flex-col items-center">
-                <div className="mb-6 relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-[#00a884] to-[#25d366] rounded-full opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
-                  <img 
-                    src="logo.png" 
-                    alt="BlackBox Chat" 
-                    className="h-24 w-auto object-contain relative z-10 drop-shadow-2xl transform transition duration-500 group-hover:scale-110"
-                    onError={(e) => {e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<span class="text-6xl animate-bounce">💬</span>';}} 
-                  />
-                </div>
-
-                <h1 className="text-4xl font-extrabold text-white mb-4 tracking-tight">
-                  BlackBox <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00a884] to-[#25d366]">Chat</span>
-                </h1>
-                <h2 className="text-[#e9edef] text-3xl font-light mb-4">Message privately</h2>
-                <p className="text-[#8696a0] text-sm mb-8 leading-relaxed max-w-md">Simple, reliable, private messaging and calling for free*, available all over the world.</p>
-                <div className="flex items-center gap-2 px-5 py-2.5 bg-[#111b21]/80 rounded-full border border-[#2a3942] text-[#8696a0] text-sm font-medium shadow-inner"><span className="text-[#00a884]">🔒</span> End-to-end encrypted</div>
-              </div>
-              <div className="absolute bottom-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#00a884]/50 to-transparent blur-sm"></div>
-            </div>
-          );
-        }
-        return (
-          <div className="flex-1 flex flex-col bg-[#202c33] min-w-0 ml-4 md:ml-0">
-            <div className="flex-1 overflow-y-auto scrollbar-hide">
-              {viewMode === 'chat' ? (
-                <Chat 
-                  key={currentChat?.id || 'general'} 
-                  socket={socket} 
-                  currentRoom={currentChat?.id || 'general'} 
-                  chat={currentChat}
-                  getDefaultAvatar={getDefaultAvatar}
-                  onCall={(isVideo) => setActiveCall({ ...currentChat, isVideo })}
-                  onNewGroup={() => setShowNewGroup(true)}
-                />
-              ) : showNewGroup ? (
-                <NewGroup 
-                  onBack={() => setShowNewGroup(false)} 
-                  contacts={chats}
-                  getDefaultAvatar={getDefaultAvatar}
-                />
-              ) : (
-                <CallHistory onBack={() => setViewMode('chat')} currentUser={currentUser} getDefaultAvatar={getDefaultAvatar} onStartChat={handleStartChat} />
-              )}
-            </div>
-          </div>
-        );
-      case 'calls':
-        return <CallHistory 
-          onBack={() => setActiveTab('chats')} 
-          currentUser={currentUser} 
-          getDefaultAvatar={getDefaultAvatar} 
-          onStartChat={handleStartChat} 
-          onStartCall={(contact) => setActiveCall({ ...contact, isVideo: false })}
-        />;
-      case 'updates':
-        return (
-          <div className="flex items-center justify-center flex-1 text-gray-400 ml-4 md:ml-0">
-            <div className="text-center">
-              <Megaphone className="w-24 h-24 mx-auto mb-4 opacity-50 text-green-400" />
-              <h2 className="text-xl font-semibold text-white mb-2">Updates</h2>
-              <p>Status updates will appear here</p>
-            </div>
-          </div>
-        );
-      case 'communities':
-        return (
-          <div className="flex items-center justify-center flex-1 text-gray-400 ml-4 md:ml-0">
-            <div className="text-center">
-              <Users className="w-24 h-24 mx-auto mb-4 opacity-50 text-green-400" />
-              <h2 className="text-xl font-semibold text-white mb-2">Communities</h2>
-              <p>Group chats and communities</p>
-            </div>
-          </div>
-        );
-      case 'shorts':
-        return (
-          <div className="flex-1 ml-4 md:ml-0">
-            <Shorts />
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
+  if (!currentUser) {
+    return <AuthWrapper onAuthSuccess={(userData) => {
+      localStorage.setItem('user', JSON.stringify(userData));
+      setCurrentUser(userData);
+    }} />;
+  }
 
   return (
-    <>
-      <div className="h-screen flex bg-[#0f1419] overflow-hidden">
-        {/* Left Nav Rail */}
-        <div className="nav-rail md:block hidden">
-          <button onClick={() => { setActiveTab('chats'); setCurrentChat(null); if(activeCall) setIsCallMinimized(true); }} className={`nav-rail-button ${activeTab === 'chats' ? 'nav-rail-button-active' : ''}`}>
-            <MessageCircle className="w-6 h-6" />
-          </button>
-          <button onClick={() => { setActiveTab('calls'); if(activeCall) setIsCallMinimized(true); }} className={`nav-rail-button ${activeTab === 'calls' ? 'nav-rail-button-active' : ''}`}>
-            <Phone className="w-6 h-6" />
-          </button>
-          <button onClick={() => { setActiveTab('updates'); if(activeCall) setIsCallMinimized(true); }} className={`nav-rail-button ${activeTab === 'updates' ? 'nav-rail-button-active' : ''}`}>
-            <Megaphone className="w-6 h-6" />
-          </button>
-          <button onClick={() => { setActiveTab('communities'); if(activeCall) setIsCallMinimized(true); }} className={`nav-rail-button ${activeTab === 'communities' ? 'nav-rail-button-active' : ''}`}>
-            <Users className="w-6 h-6" />
-          </button>
-          <button onClick={() => { setActiveTab('shorts'); if(activeCall) setIsCallMinimized(true); }} className={`nav-rail-button ${activeTab === 'shorts' ? 'nav-rail-button-active' : ''}`}>
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H3V6h18v12z"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Sidebar */}
-        {activeTab === 'chats' && (
-        <div className="chat-sidebar md:block hidden flex-shrink-0">
-          <div 
-            onClick={() => { setCurrentChat(null); setShowNewGroup(false); }}
-            className="h-[70px] flex-shrink-0 border-b border-[#2a3942] bg-gradient-to-r from-black to-[#082f28] flex items-center justify-start relative z-30 px-4 shadow-sm cursor-pointer select-none"
-            title="Go to Home"
-          >
-            <img 
-              src="logo.png" 
-              alt="BlackBox WhatsApp" 
-              className="h-10 w-auto object-contain"
-              onError={(e) => {e.target.onerror = null; e.target.style.display = 'none'; e.target.parentNode.innerHTML = '<span class="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-[#00a884] to-[#25d366] bg-clip-text text-transparent drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]">BlackBox Chat</span>';}} 
-            />
+    <div className="h-screen flex bg-[#0f1419]">
+      {/* Sidebar */}
+      <div className="w-80 bg-[#111b21] border-r border-[#2a3942] p-4 flex flex-col">
+        <div className="flex items-center mb-8">
+          <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-4">
+            💬
           </div>
-
-          <ChatList className="h-full flex-1" chats={chats} currentChat={currentChat} onSelect={handleSelectChat} getDefaultAvatar={getDefaultAvatar} />
-
-          <UserMenu
-            currentUser={currentUser} 
-            getDefaultAvatar={getDefaultAvatar}
-            onLogout={handleLogout}
-            onSettings={() => {}} 
-          /> 
+          <div>
+            <div className="text-white font-semibold">{currentUser.name}</div>
+            <div className="text-[#8696a0] text-sm">Online</div>
+          </div>
         </div>
-        )}
-
-        {/* Main Content */}
-        <div className="flex-1 min-w-0 flex flex-col md:flex-row relative">
-          {renderMainContent()}
-
-          {/* Call Interface Overlay */}
-          {activeCall && (
-            <div 
-              onMouseDown={handleDragStart}
-              style={isCallMinimized ? { transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`, cursor: 'move' } : {}}
-              className={isCallMinimized 
-              ? "absolute bottom-6 right-6 w-80 h-56 z-[100] shadow-2xl rounded-2xl overflow-hidden border border-[#2a3942] bg-[#0b141a]" 
-              : "absolute inset-0 z-[100] bg-[#0b141a] transition-all duration-300 ease-in-out"}>
-              <CallInterface 
-                contact={activeCall} 
-                onEndCall={(duration, wasConnected) => {
-                  const messageText = wasConnected ? `📞 Voice Call · ${duration}` : `📞 Voice Call`;
-                  const now = new Date();
-                  const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-
-                  const callLog = { name: activeCall.name, type: 'outgoing', status: 'answered', time: timeString, duration: duration };
-                  let finalChatId = activeCall.id;
-                  const existingChat = chats.find(c => c.id === activeCall.id || c.name === activeCall.name);
-                  if (existingChat) {
-                    finalChatId = existingChat.id;
-
-                    setChats(prevChats =>{
-                      const otherChats = prevChats.filter(c => c.id !== finalChatId);
-                      const updatedChat = {
-                        ...existingChat,
-                        messages: [
-                          ...(existingChat.messages || []),
-                          {
-                            id: `call_${now.getTime()}`,
-                            message: messageText,
-                            timestamp: now.toISOString(),
-                            type: 'call',
-                            duration: duration,
-                            wasConnected: wasConnected,
-                            userId: currentUser?.id
-                          }
-                        ]
-                      };
-                      return [updatedChat, ...otherChats];
-                    });
-                  }
-
-                  if (existingChat) {
-                    setChats(prevChats => {
-                      const otherChats = prevChats.filter(c => c.id !== finalChatId);
-                      const updatedChat = {
-                        ...existingChat,
-                        time: timeString,
-                        unread: 0
-                      };
-                      return [updatedChat, ...otherChats];
-                    });
-                  }
-
-                  setActiveCall(null);
-                  setIsCallMinimized(false);
-                }}
-                getDefaultAvatar={getDefaultAvatar}
-                isVideoCall={activeCall.isVideo}
-                isMinimized={isCallMinimized}
-                onToggleMinimize={() => {
-                  if (!isCallMinimized) setDragOffset({ x: 0, y: 0 });
-                  setIsCallMinimized(!isCallMinimized);
-                }}
-              />
-            </div>
-          )}
+        
+        <div className="flex-1">
+          <div className="p-3 bg-[#202c33] rounded-lg mb-4 cursor-pointer hover:bg-[#2a3942]">
+            <div className="text-white font-semibold mb-1">General Chat</div>
+            <div className="text-[#8696a0] text-sm">Welcome!</div>
+          </div>
         </div>
 
-        {/* Mobile Nav */}
-        <div className="mobile-nav md:hidden">
-          <button onClick={() => { setActiveTab('chats'); setCurrentChat(null); if(activeCall) setIsCallMinimized(true); }} className={`py-2 px-3 rounded-lg font-medium transition-colors ${activeTab === 'chats' ? 'bg-[#00a884] text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-[#2a3942]'}`}>
-            <MessageCircle className="w-6 h-6 mx-auto" />
-            <span className="text-xs mt-1 block">Chats</span>
-          </button>
-          <button onClick={() => { setActiveTab('calls'); if(activeCall) setIsCallMinimized(true); }} className={`py-2 px-3 rounded-lg font-medium transition-colors ${activeTab === 'calls' ? 'bg-[#00a884] text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-[#2a3942]'}`}>
-            <Phone className="w-6 h-6 mx-auto" />
-            <span className="text-xs mt-1 block">Calls</span>
-          </button>
-          <button onClick={() => { setActiveTab('updates'); if(activeCall) setIsCallMinimized(true); }} className={`py-2 px-3 rounded-lg font-medium transition-colors ${activeTab === 'updates' ? 'bg-[#00a884] text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-[#2a3942]'}`}>
-            <Megaphone className="w-6 h-6 mx-auto" />
-            <span className="text-xs mt-1 block">Updates</span>
-          </button>
-          <button onClick={() => { setActiveTab('communities'); if(activeCall) setIsCallMinimized(true); }} className={`py-2 px-3 rounded-lg font-medium transition-colors ${activeTab === 'communities' ? 'bg-[#00a884] text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-[#2a3942]'}`}>
-            <Users className="w-6 h-6 mx-auto" />
-            <span className="text-xs mt-1 block">Communities</span>
-          </button>
-          <button onClick={() => { setActiveTab('shorts'); if(activeCall) setIsCallMinimized(true); }} className={`py-2 px-3 rounded-lg font-medium transition-colors ${activeTab === 'shorts' ? 'bg-[#00a884] text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-[#2a3942]'}`}>
-            <svg className="w-6 h-6 mx-auto" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H3V6h18v12z"/>
-            </svg>
-            <span className="text-xs mt-1 block">Shorts</span>
-          </button>
-        </div>
+        <button 
+          onClick={handleLogout}
+          className="mt-auto p-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold"
+        >
+          Logout
+        </button>
       </div>
 
-      {/* Cropper Modal */}
-      {showCropper && (
-        <div className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4">
-          <div className="bg-[#111b21] rounded-2xl p-8 w-full max-w-md max-h-[90vh] shadow-2xl border border-[#2a3942]">
-            <h3 className="text-white text-lg font-semibold mb-6 text-center">Crop Photo</h3>
-            <div className="h-64 w-full relative mb-6 rounded-xl overflow-hidden border-2 border-[#2a3942]">
-              <Cropper
-                image={cropImage}
-                crop={crop}
-                zoom={zoom}
-                aspect={1}
-                onCropChange={setCrop}
-                onCropComplete={onCropComplete}
-                onZoomChange={setZoom}
-              />
-            </div>
-            <div className="flex flex-col space-y-4">
-              <label className="block text-sm text-gray-300 mb-2">Zoom:</label>
-              <input
-                type="range"
-                min="1"
-                max="3"
-                step="0.1"
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#00a884]"
-              />
-              <div className="flex gap-4 justify-end pt-4 border-t border-[#2a3942]">
-                <button
-                  onClick={() => {
-                    setShowCropper(false);
-                    setCropImage('');
-                  }}
-                  className="px-6 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCropSave}
-                  className="px-6 py-2 bg-[#00a884] hover:bg-[#008c6d] text-white rounded-lg font-medium transition-all shadow-lg"
-                >
-                  Save Photo
-                </button>
-              </div>
-            </div>
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center text-white bg-gradient-to-br from-[#111b21] to-[#202c33]">
+        <div className="text-center">
+          <div className="w-32 h-32 mx-auto mb-8 bg-green-500 rounded-full flex items-center justify-center text-4xl">
+            💬
           </div>
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+            BlackBox WhatsApp
+          </h1>
+          <p className="text-xl text-[#8696a0]">Select a chat to start messaging</p>
         </div>
-      )}
-    </>
-  ); 
+      </div>
+    </div>
+  );
 }
 
 export default App;
-export { socket };
