@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock } from 'lucide-react';
 
-const Signup = ({ onSwitchToLogin, onSignupSuccess }) => {
+// আপনার Vercel ব্যাকএন্ড লিঙ্ক
+const API_URL = 'https://blackbox-whatsapp-ursx.vercel.app'; 
+
+const Signup = ({ onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -16,89 +19,80 @@ const Signup = ({ onSwitchToLogin, onSignupSuccess }) => {
     setError('');
 
     try {
-      // এখানে আমরা ডামি সিমুলেশন করছি, তবে রিয়েল টাইম ডাটা সেভ করছি
-      setTimeout(() => {
-        const user = {
-          name: formData.name,
-          email: formData.email,
-          id: Date.now() // একটি ইউনিক আইডি জেনারেট করছি
-        };
+      // সরাসরি ব্যাকএন্ড সার্ভারে ডাটা পাঠানো হচ্ছে
+      const response = await fetch(`${API_URL}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
 
-        // ব্রাউজারের মেমোরিতে ডাটা সেভ করা
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // সফল মেসেজ দেখানো
+      const data = await response.json();
+
+      if (data.success) {
         alert("Account Created Successfully! Please Sign In.");
-        
-        // সফল হওয়ার পর লগইন পেজে পাঠিয়ে দেওয়া
-        onSwitchToLogin(); 
-        
-        setLoading(false);
-      }, 1500);
+        onSwitchToLogin(); // সফল হলে লগইন পেজে নিয়ে যাবে
+      } else {
+        setError(data.error || 'Registration failed');
+      }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      setError('সার্ভারের সাথে কানেক্ট করা যাচ্ছে না। আবার চেষ্টা করুন।');
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-700">
+    <div className="min-h-screen bg-[#0b141a] flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[#111b21] p-8 rounded-2xl border border-[#2a3942]">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center text-3xl">
-            👤
-          </div>
           <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-slate-400">Join BlackBox Chat</p>
+          <p className="text-[#8696a0]">BlackBox Chat-এ যোগ দিন</p>
         </div>
 
         {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-500 p-3 rounded-lg mb-4 text-sm text-center">
+          <div className="bg-red-500/10 border border-red-500 text-red-500 p-3 rounded-lg mb-6 text-sm text-center">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-slate-400 text-sm mb-2">Full Name</label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5" />
               <input
                 type="text"
-                placeholder="Your name"
+                placeholder="আপনার নাম"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full bg-slate-700 border border-slate-600 text-white pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-green-500 transition-colors"
+                className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-10 pr-4 py-3 outline-none focus:border-[#00a884]"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-400 text-sm mb-2">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5" />
               <input
                 type="email"
-                placeholder="your@email.com"
+                placeholder="ইমেইল এড্রেস"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full bg-slate-700 border border-slate-600 text-white pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-green-500 transition-colors"
+                className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-10 pr-4 py-3 outline-none focus:border-[#00a884]"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-400 text-sm mb-2">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5" />
               <input
                 type="password"
-                placeholder="Choose a password"
+                placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="w-full bg-slate-700 border border-slate-600 text-white pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-green-500 transition-colors"
+                className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-10 pr-4 py-3 outline-none focus:border-[#00a884]"
                 minLength="6"
                 required
               />
@@ -108,21 +102,19 @@ const Signup = ({ onSwitchToLogin, onSignupSuccess }) => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold transition-all ${
-              loading ? 'bg-slate-600 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'
-            }`}
+            className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-3 rounded-xl transition-all disabled:opacity-50"
           >
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Create Account'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-slate-400 text-sm">
-            Already have an account?{' '}
+          <p className="text-[#8696a0] text-sm">
+            অ্যাকাউন্ট আছে?{' '}
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="text-green-400 hover:text-green-300 font-medium"
+              className="text-[#00a884] font-semibold"
             >
               Sign in
             </button>
