@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import Login from '../pages/Login'; // পাথ ঠিক আছে কি না চেক করে নিন
+// এখানে খেয়াল করুন: আপনার ফাইল যদি 'login.jsx' হয় তবে ছোট হাতের 'login' লিখবেন
+import Login from '../pages/Login'; 
 import Signup from '../pages/Signup';
 
 const AuthWrapper = ({ onAuthSuccess }) => {

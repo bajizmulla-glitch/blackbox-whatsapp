@@ -6,8 +6,8 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // আপনার ভেরসেল ব্যাকএন্ড লিঙ্ক
-  const API_URL = 'https://blackbox-chat.vercel.app';
+  // আপনার নতুন ভেরসেল ব্যাকএন্ড লিঙ্ক আপডেট করা হয়েছে
+  const API_URL = 'https://server-lemon-gamma.vercel.app';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,7 +24,6 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
       const data = await response.json();
 
       if (response.ok) {
-        // সফল হলে ইউজারের তথ্য লোকাল স্টোরেজে সেভ হবে
         localStorage.setItem('user', JSON.stringify(data.user));
         onLoginSuccess(data.user);
       } else {

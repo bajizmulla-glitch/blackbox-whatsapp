@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 
 const Signup = ({ onSwitchToLogin }) => {
-  const [formData, setFormData] = useState({ username: '', email: '', password: '' }); // 'name' বদলে 'username' করা হয়েছে ব্যাকএন্ডের সাথে মিলাতে
+  const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPass, setShowPass] = useState(false);
 
-  // আপনার ভেরসেল ব্যাকএন্ড লিঙ্ক
-  const API_URL = 'https://blackbox-chat.vercel.app';
+  // আপনার নতুন ভেরসেল ব্যাকএন্ড লিঙ্ক আপডেট করা হয়েছে
+  const API_URL = 'https://server-lemon-gamma.vercel.app';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
