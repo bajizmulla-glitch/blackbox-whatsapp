@@ -6,67 +6,83 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // ভেরসেলের জন্য ডাইনামিক API রুট
+  const API_URL = '/api';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Simulate API call
-    setTimeout(() => {
-      if (formData.email === 'test@test.com' && formData.password === 'password') {
-        const user = { name: 'Test User', email: formData.email };
-        localStorage.setItem('user', JSON.stringify(user));
-        onLoginSuccess(user);
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // সফল হলে ইউজারের তথ্য লোকাল স্টোরেজে সেভ হবে
+        localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.token) localStorage.setItem('token', data.token);
+        
+        onLoginSuccess(data.user);
       } else {
-        setError('Invalid credentials');
+        setError(data.message || 'ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।');
       }
+    } catch (err) {
+      console.error("Login Error:", err);
+      setError('সার্ভারের সাথে কানেক্ট করা যাচ্ছে না।');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-gray-900 flex items-center justify-center p-6">
-      <div className="w-full max-w-sm bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700 shadow-2xl p-8">
+    <div className="min-h-screen bg-[#0b141a] flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[#111b21] p-8 rounded-2xl border border-[#2a3942] shadow-2xl">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-6 bg-green-500 rounded-full flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto mb-4 bg-[#00a884] rounded-full flex items-center justify-center text-3xl">
             💬
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">BlackBox Chat</h1>
-          <p className="text-slate-400">Sign in to continue</p>
+          <p className="text-[#8696a0]">আপনার অ্যাকাউন্টে লগইন করুন</p>
         </div>
 
         {error && (
-          <div className="bg-red-500/20 border border-red-500/50 text-red-300 rounded-xl p-3 mb-6 text-sm">
+          <div className="bg-red-500/10 border border-red-500 text-red-500 p-3 rounded-xl mb-6 text-sm text-center">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-slate-400 text-sm mb-2">Email</label>
+            <label className="block text-[#8696a0] text-sm mb-2">ইমেইল এড্রেস</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5" />
               <input
                 type="email"
-                placeholder="test@test.com"
+                placeholder="আপনার ইমেইল"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full bg-slate-700 border border-slate-600 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full bg-[#202c33] border border-[#2a3942] rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-[#00a884] transition-all"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-400 text-sm mb-2">Password</label>
+            <label className="block text-[#8696a0] text-sm mb-2">পাসওয়ার্ড</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5" />
               <input
                 type="password"
-                placeholder="password"
+                placeholder="আপনার পাসওয়ার্ড"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="w-full bg-slate-700 border border-slate-600 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full bg-[#202c33] border border-[#2a3942] rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-[#00a884] transition-all"
                 required
               />
             </div>
@@ -75,19 +91,19 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-500 hover:bg-green-600 disabled:bg-green-400 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+            className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-3 rounded-xl transition-all disabled:opacity-50"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'প্রবেশ করা হচ্ছে...' : 'Sign In'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-slate-400 text-sm">
-            Don't have an account?{' '}
+          <p className="text-[#8696a0] text-sm">
+            অ্যাকাউন্ট নেই?{' '}
             <button
               type="button"
               onClick={onSwitchToSignup}
-              className="text-green-400 hover:text-green-300 font-semibold"
+              className="text-[#00a884] font-semibold hover:underline"
             >
               Sign up
             </button>
