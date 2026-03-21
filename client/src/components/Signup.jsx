@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock } from 'lucide-react';
 
-// আপনার Vercel ব্যাকএন্ড লিঙ্ক
-const API_URL = 'https://blackbox-whatsapp-ursx.vercel.app'; 
-
 const Signup = ({ onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -13,29 +10,35 @@ const Signup = ({ onSwitchToLogin }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // এখানে আমরা শুধু /api ব্যবহার করব যাতে ভেরসেল নিজের সার্ভারকেই চিনে নেয়
+  const API_URL = '/api'; 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      // সরাসরি ব্যাকএন্ড সার্ভারে ডাটা পাঠানো হচ্ছে
-      const response = await fetch(`${API_URL}/api/register`, {
+      const response = await fetch(`${API_URL}/signup`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok) {
         alert("Account Created Successfully! Please Sign In.");
-        onSwitchToLogin(); // সফল হলে লগইন পেজে নিয়ে যাবে
+        onSwitchToLogin(); 
       } else {
-        setError(data.error || 'Registration failed');
+        // সার্ভার থেকে আসা ভুল মেসেজটি দেখাবে
+        setError(data.message || 'Registration failed. Please try again.');
       }
     } catch (err) {
-      setError('সার্ভারের সাথে কানেক্ট করা যাচ্ছে না। আবার চেষ্টা করুন।');
+      console.error("Signup Error:", err);
+      setError('সার্ভারের সাথে কানেক্ট করা যাচ্ছে না। আপনার ইন্টারনেট বা ডাটাবেজ চেক করুন।');
     } finally {
       setLoading(false);
     }
@@ -64,7 +67,7 @@ const Signup = ({ onSwitchToLogin }) => {
                 placeholder="আপনার নাম"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-10 pr-4 py-3 outline-none focus:border-[#00a884]"
+                className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-10 pr-4 py-3 outline-none focus:border-[#00a884] transition-all"
                 required
               />
             </div>
@@ -78,7 +81,7 @@ const Signup = ({ onSwitchToLogin }) => {
                 placeholder="ইমেইল এড্রেস"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-10 pr-4 py-3 outline-none focus:border-[#00a884]"
+                className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-10 pr-4 py-3 outline-none focus:border-[#00a884] transition-all"
                 required
               />
             </div>
@@ -89,10 +92,10 @@ const Signup = ({ onSwitchToLogin }) => {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5" />
               <input
                 type="password"
-                placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"
+                placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-10 pr-4 py-3 outline-none focus:border-[#00a884]"
+                className="w-full bg-[#202c33] border border-[#2a3942] text-white rounded-xl pl-10 pr-4 py-3 outline-none focus:border-[#00a884] transition-all"
                 minLength="6"
                 required
               />
@@ -102,7 +105,7 @@ const Signup = ({ onSwitchToLogin }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-3 rounded-xl transition-all disabled:opacity-50"
+            className="w-full bg-[#00a884] hover:bg-[#06cf9c] text-[#111b21] font-bold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Create Account'}
           </button>
@@ -114,7 +117,7 @@ const Signup = ({ onSwitchToLogin }) => {
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="text-[#00a884] font-semibold"
+              className="text-[#00a884] font-semibold hover:underline"
             >
               Sign in
             </button>
