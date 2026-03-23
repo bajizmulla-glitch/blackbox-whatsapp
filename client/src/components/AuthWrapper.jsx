@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 // এখানে খেয়াল করুন: আপনার ফাইল যদি 'login.jsx' হয় তবে ছোট হাতের 'login' লিখবেন
-import Login from '../pages/Login'; 
-import Signup from '../pages/Signup';
+import Login from './Login';
+import Signup from './Signup';
 
 const AuthWrapper = ({ onAuthSuccess }) => {
   const [view, setView] = useState('login'); // 'login' | 'signup'
