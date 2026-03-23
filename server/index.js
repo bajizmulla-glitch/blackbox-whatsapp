@@ -30,6 +30,17 @@ const User = mongoose.model('User', userSchema);
 app.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
+
+    // ইউজার আগে থেকেই আছে কিনা তা চেক করা
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      if (existingUser.email === email) {
+        return res.status(400).json({ error: "এই ইমেল দিয়ে আগেই একাউন্ট খোলা হয়েছে।" });
+      }
+      if (existingUser.username === username) {
+        return res.status(400).json({ error: "এই ইউজারনেমটি অন্য কেউ ব্যবহার করছে।" });
+      }
+    }
     
     // পাসওয়ার্ড এনক্রিপ্ট করা (Security)
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -43,7 +54,8 @@ app.post('/register', async (req, res) => {
     await newUser.save();
     res.status(201).json({ message: "User registered successfully!" });
   } catch (err) {
-    res.status(500).json({ error: "Registration failed! User might already exist." });
+    console.error("Registration Error:", err); // ডিবাগিং এর জন্য সার্ভারে এরর লগ করা
+    res.status(500).json({ error: "সার্ভারে একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।" });
   }
 });
 
